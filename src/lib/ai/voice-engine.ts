@@ -17,11 +17,22 @@ const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Rachel default
 
 export async function transcribeAudio(audioFile: File): Promise<string> {
-  const transcription = await getOpenAI().audio.transcriptions.create({
-    file: audioFile,
-    model: "whisper-1",
-  });
-  return transcription.text;
+  // OpenAI Whisper limit is 25MB
+  const MAX_SIZE = 25 * 1024 * 1024;
+  if (audioFile.size > MAX_SIZE) {
+    throw new Error("Audio file is too large (max 25MB)");
+  }
+
+  try {
+    const transcription = await getOpenAI().audio.transcriptions.create({
+      file: audioFile,
+      model: "whisper-1",
+    });
+    return transcription.text;
+  } catch (error: any) {
+    console.error("Transcription Error:", error);
+    throw new Error(`Failed to transcribe audio: ${error.message || "Unknown error"}`);
+  }
 }
 
 export async function synthesizeSpeech(text: string): Promise<Buffer> {

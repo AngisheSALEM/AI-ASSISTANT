@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getAgentModel } from "@/lib/ai/agent-engine";
 import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
@@ -26,6 +27,12 @@ export async function POST(
 
     if (!agent) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+    }
+
+    // Check credits before proceeding (1 credit for text)
+    const canProceed = await hasEnoughCredits(agent.organizationId, 1);
+    if (!canProceed) {
+      return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
     }
 
     // 2. Gérer la conversation
@@ -123,7 +130,14 @@ export async function POST(
         };
 
         // Exécution "en arrière-plan"
-        saveMessage();
+        await saveMessage();
+
+        // Deduct 1 credit after successful message processing
+        try {
+          await deductCredits(agent.organizationId, 1);
+        } catch (creditError) {
+          console.error("Error deducting credits:", creditError);
+        }
       },
     });
 

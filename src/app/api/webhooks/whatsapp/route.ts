@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import prisma from "@/lib/prisma";
+import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getAgentModel } from "@/lib/ai/agent-engine";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
@@ -8,6 +10,16 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
+const WHATSAPP_APP_SECRET = process.env.WHATSAPP_APP_SECRET;
+
+function verifySignature(payload: string, signature: string) {
+  if (!WHATSAPP_APP_SECRET) return true; // En dev, si pas de secret on skip
+  const hash = crypto
+    .createHmac("sha256", WHATSAPP_APP_SECRET)
+    .update(payload)
+    .digest("hex");
+  return `sha256=${hash}` === signature;
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -25,7 +37,14 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+    const signature = req.headers.get("x-hub-signature-256");
+
+    if (WHATSAPP_APP_SECRET && (!signature || !verifySignature(rawBody, signature))) {
+      return new Response("Invalid signature", { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody);
 
     // Vérifier s'il s'agit d'un message WhatsApp
     const entry = body.entry?.[0];
@@ -58,6 +77,16 @@ export async function POST(req: Request) {
 
     if (!agent) {
       return NextResponse.json({ error: "No agent configured" }, { status: 404 });
+    }
+
+    // Déterminer le coût (1 pour texte, 5 pour audio)
+    const isAudio = message.type === "audio" || message.type === "voice";
+    const creditCost = isAudio ? 5 : 1;
+
+    // Check credits
+    const canProceed = await hasEnoughCredits(agent.organizationId, creditCost);
+    if (!canProceed) {
+      return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
     }
 
     // 1. Recherche RAG
@@ -105,6 +134,9 @@ export async function POST(req: Request) {
         { content: responseText, role: "ASSISTANT", conversationId: conversation.id },
       ],
     });
+
+    // Déduire les crédits
+    await deductCredits(agent.organizationId, creditCost);
 
     return NextResponse.json({ status: "success" });
   } catch (error) {

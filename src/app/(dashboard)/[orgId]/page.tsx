@@ -6,9 +6,12 @@ import {
   Upload,
   FileText,
   Plus,
+  Coins,
+  AlertTriangle,
 } from "lucide-react";
 import { AreaChart, DonutChart, Card, Title, Text } from "@tremor/react";
 import RecentActivity from "@/components/RecentActivity";
+import RechargeButton from "@/components/RechargeButton";
 
 export default async function DashboardPage({
   params,
@@ -16,6 +19,15 @@ export default async function DashboardPage({
   params: { orgId: string };
 }) {
   const { orgId } = params;
+
+  // 0. Fetch Organization details (including credits)
+  const organization = await prisma.organization.findUnique({
+    where: { id: orgId },
+  });
+
+  if (!organization) {
+    return <div>Organisation non trouvée</div>;
+  }
 
   // 1. Fetch real stats
   const agentCount = await prisma.agent.count({
@@ -95,15 +107,37 @@ export default async function DashboardPage({
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
-        <p className="text-gray-500 mt-2">
-          Organisation : <span className="font-medium text-gray-900">{orgId}</span>
-        </p>
+      {organization.credits < 20 && (
+        <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-md flex items-center space-x-3">
+          <AlertTriangle className="text-orange-400" size={20} />
+          <p className="text-sm text-orange-700">
+            Alerte : Vos crédits sont faibles ({organization.credits}). Pensez à recharger pour éviter toute interruption de service.
+          </p>
+        </div>
+      )}
+
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+          <p className="text-gray-500 mt-2">
+            Organisation : <span className="font-medium text-gray-900">{organization.name}</span>
+          </p>
+        </div>
+        <RechargeButton orgId={orgId} currentCredits={organization.credits} />
       </header>
 
       {/* Analytics Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card decoration="top" decorationColor="orange">
+          <div className="flex items-center justify-between">
+            <Text>Crédits Restants</Text>
+            <Coins className="text-orange-500" size={20} />
+          </div>
+          <div className="mt-2 flex items-baseline">
+            <span className="text-2xl font-semibold">{organization.credits}</span>
+          </div>
+        </Card>
+
         <Card decoration="top" decorationColor="blue">
           <div className="flex items-center justify-between">
             <Text>Agents Actifs</Text>
