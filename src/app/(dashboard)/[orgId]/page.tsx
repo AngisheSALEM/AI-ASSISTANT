@@ -33,54 +33,41 @@ export default async function DashboardPage({
   });
 
   // 2. Data for AreaChart (Messages per day - last 7 days)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Utilisation de prisma.message.count() avec filtres where pour la performance
+  const chartData = await Promise.all(
+    Array.from({ length: 7 }).map(async (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
 
-  const messagesByDay = await prisma.message.groupBy({
-    by: ["createdAt"],
-    where: {
-      conversation: {
-        agent: {
-          organizationId: orgId,
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const count = await prisma.message.count({
+        where: {
+          conversation: {
+            agent: {
+              organizationId: orgId,
+            },
+          },
+          createdAt: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
         },
-      },
-      createdAt: {
-        gte: sevenDaysAgo,
-      },
-    },
-    _count: {
-      id: true,
-    },
-  });
+      });
 
-  // Format data for Tremor (Aggregate by day because createdAt is a full timestamp)
-  const chartDataMap = new Map();
-  for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "short",
-    });
-    chartDataMap.set(dateStr, 0);
-  }
-
-  messagesByDay.forEach((m) => {
-    const dateStr = m.createdAt.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "short",
-    });
-    if (chartDataMap.has(dateStr)) {
-      chartDataMap.set(dateStr, chartDataMap.get(dateStr) + m._count.id);
-    }
-  });
-
-  const chartData = Array.from(chartDataMap.entries())
-    .reverse()
-    .map(([date, count]) => ({
-      date,
-      "Messages": count,
-    }));
+      return {
+        date: date.toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "short",
+        }),
+        "Messages": count,
+      };
+    })
+  );
 
   // 3. Data for DonutChart (Usage by Agent)
   const agents = await prisma.agent.findMany({
@@ -152,28 +139,43 @@ export default async function DashboardPage({
         {/* Main Chart */}
         <Card className="lg:col-span-2">
           <Title>Volume de messages (7 derniers jours)</Title>
-          <AreaChart
-            className="h-72 mt-4"
-            data={chartData}
-            index="date"
-            categories={["Messages"]}
-            colors={["blue"]}
-            valueFormatter={(number: number) =>
-              Intl.NumberFormat("us").format(number).toString()
-            }
-          />
+          {totalMessages === 0 ? (
+            <div className="h-72 mt-4 flex items-center justify-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
+              <div className="text-center">
+                <MessageSquare className="mx-auto text-gray-300 mb-2" size={32} />
+                <p className="text-gray-500 text-sm">Pas encore de données, commencez à discuter avec un agent</p>
+              </div>
+            </div>
+          ) : (
+            <AreaChart
+              className="h-72 mt-4"
+              data={chartData}
+              index="date"
+              categories={["Messages"]}
+              colors={["blue"]}
+              valueFormatter={(number: number) =>
+                Intl.NumberFormat("us").format(number).toString()
+              }
+            />
+          )}
         </Card>
 
         {/* Donut Chart */}
         <Card>
           <Title>Répartition par Agent</Title>
-          <DonutChart
-            className="h-72 mt-4"
-            data={donutData}
-            category="amount"
-            index="name"
-            colors={["blue", "cyan", "indigo", "violet", "slate"]}
-          />
+          {totalMessages === 0 ? (
+            <div className="h-72 mt-4 flex items-center justify-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
+              <p className="text-gray-500 text-sm text-center px-4">Aucune activité enregistrée</p>
+            </div>
+          ) : (
+            <DonutChart
+              className="h-72 mt-4"
+              data={donutData}
+              category="amount"
+              index="name"
+              colors={["blue", "cyan", "indigo", "violet", "slate"]}
+            />
+          )}
         </Card>
       </div>
 
