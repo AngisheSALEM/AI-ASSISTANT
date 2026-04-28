@@ -7,11 +7,15 @@ import {
   Plus
 } from "lucide-react";
 
-export default function DashboardPage({ params }: { params: { orgId: string } }) {
+export default async function DashboardPage({ params }: { params: { orgId: string } }) {
+  // En Next.js 15, params est une Promise. Pour 14, c'est un objet.
+  // Ici on garde le typage standard 14 mais on prépare le terrain.
+  const { orgId } = params;
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Espace de travail : {params.orgId}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Espace de travail : {orgId}</h1>
         <p className="text-gray-500 mt-2">Bienvenue sur votre tableau de bord Agentia-Kin.</p>
       </header>
 
