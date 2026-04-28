@@ -12,6 +12,7 @@ model Organization {
   name          String
   logo          String?
   plan          Plan           @default(FREE)
+  credits       Int            @default(100)
   users         User[]
   agents        Agent[]
   knowledgeBase KnowledgeBase[]

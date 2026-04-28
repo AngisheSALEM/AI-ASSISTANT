@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { transcribeAudio, synthesizeSpeech } from "@/lib/ai/voice-engine";
 import prisma from "@/lib/prisma";
+import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getAgentModel } from "@/lib/ai/agent-engine";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
@@ -17,10 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Audio and agentId are required" }, { status: 400 });
     }
 
-    // 1. Transcription
-    const transcription = await transcribeAudio(audioFile);
-
-    // 2. Récupérer l'agent
+    // Récupérer l'agent en premier pour vérifier les crédits
     const agent = await prisma.agent.findUnique({
       where: { id: agentId },
     });
@@ -28,6 +26,15 @@ export async function POST(req: Request) {
     if (!agent) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
+
+    // Check credits (5 credits for voice)
+    const canProceed = await hasEnoughCredits(agent.organizationId, 5);
+    if (!canProceed) {
+      return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
+    }
+
+    // 1. Transcription
+    const transcription = await transcribeAudio(audioFile);
 
     // 3. RAG & LLM Response (simplified for voice - no full history for now)
     const contextResults = await similaritySearch(transcription, agent.organizationId);
@@ -59,6 +66,9 @@ export async function POST(req: Request) {
         { content: responseText, role: "ASSISTANT", conversationId: currentConversationId },
       ],
     });
+
+    // Déduire les crédits
+    await deductCredits(agent.organizationId, 5);
 
     // Retourner l'audio et la transcription
     return new Response(new Uint8Array(audioBuffer), {
