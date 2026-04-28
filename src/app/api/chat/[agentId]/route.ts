@@ -2,11 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getAgentModel } from "@/lib/ai/agent-engine";
-import { SystemMessage, HumanMessage } from "@langchain/core/messages";
+import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-
-// On retire runtime = "edge" car Prisma Client ne le supporte pas nativement sans proxy
-// export const runtime = "edge";
 
 export async function POST(
   req: Request,
@@ -15,7 +12,7 @@ export async function POST(
   try {
     const { agentId } = params;
     const body = await req.json();
-    const { message } = body;
+    const { message, conversationId } = body;
 
     if (!message) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -31,13 +28,47 @@ export async function POST(
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    // 2. Recherche RAG : Trouver le contexte pertinent
+    // 2. Gérer la conversation
+    let currentConversationId = conversationId;
+    if (!currentConversationId) {
+      const newConversation = await prisma.conversation.create({
+        data: { agentId },
+      });
+      currentConversationId = newConversation.id;
+    }
+
+    // 3. Enregistrer le message de l'utilisateur
+    await prisma.message.create({
+      data: {
+        content: message,
+        role: "USER",
+        conversationId: currentConversationId,
+      },
+    });
+
+    // 4. Récupérer l'historique (5 derniers messages)
+    const history = await prisma.message.findMany({
+      where: { conversationId: currentConversationId },
+      orderBy: { createdAt: "desc" },
+      take: 6, // Les 5 derniers + le message actuel qu'on vient d'ajouter
+    });
+
+    // On inverse pour avoir l'ordre chronologique et on exclut le dernier (le message actuel est géré séparément dans HumanMessage)
+    const pastMessages = history
+      .slice(1)
+      .reverse()
+      .map((msg) => {
+        if (msg.role === "USER") return new HumanMessage(msg.content);
+        return new AIMessage(msg.content);
+      });
+
+    // 5. Recherche RAG : Trouver le contexte pertinent
     const contextResults = await similaritySearch(message, agent.organizationId);
     const contextText = contextResults
       .map((r) => `[Source: ${r.title}]\n${r.content}`)
       .join("\n\n");
 
-    // 3. Préparer le System Prompt augmenté
+    // 6. Préparer le System Prompt augmenté
     const augmentedSystemPrompt = `
       ${agent.systemPrompt}
 
@@ -49,23 +80,40 @@ export async function POST(
       Si tu ne connais pas la réponse, dis-le poliment.
     `;
 
-    // 4. Initialiser le modèle et streamer la réponse
+    // 7. Initialiser le modèle et streamer la réponse
     const model = getAgentModel(agent.temperature);
-
     const parser = new StringOutputParser();
 
     const stream = await model.pipe(parser).stream([
       new SystemMessage(augmentedSystemPrompt),
+      ...pastMessages,
       new HumanMessage(message),
     ]);
 
     // Conversion du stream pour qu'il soit compatible avec le format Response
     const encoder = new TextEncoder();
+    let fullResponse = "";
+
     const readableStream = new ReadableStream({
       async start(controller) {
         for await (const chunk of stream) {
+          fullResponse += chunk;
           controller.enqueue(encoder.encode(chunk));
         }
+
+        // 8. Enregistrer la réponse de l'IA une fois le stream terminé
+        try {
+          await prisma.message.create({
+            data: {
+              content: fullResponse,
+              role: "ASSISTANT",
+              conversationId: currentConversationId,
+            },
+          });
+        } catch (dbError) {
+          console.error("Error saving assistant message:", dbError);
+        }
+
         controller.close();
       },
     });
@@ -73,6 +121,7 @@ export async function POST(
     return new Response(readableStream, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
+        "X-Conversation-Id": currentConversationId,
       },
     });
 
