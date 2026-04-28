@@ -101,20 +101,29 @@ export async function POST(
           controller.enqueue(encoder.encode(chunk));
         }
 
-        // 8. Enregistrer la réponse de l'IA une fois le stream terminé
-        try {
-          await prisma.message.create({
-            data: {
-              content: fullResponse,
-              role: "ASSISTANT",
-              conversationId: currentConversationId,
-            },
-          });
-        } catch (dbError) {
-          console.error("Error saving assistant message:", dbError);
-        }
-
         controller.close();
+
+        // 8. Enregistrer la réponse de l'IA une fois le stream terminé
+        // On le fait après controller.close() pour ne pas bloquer la fin du stream pour l'utilisateur.
+        // NOTE: Dans certains environnements Edge (Vercel), il est recommandé d'utiliser
+        // une Promise qui est attendue si on veut être 100% sûr, mais ici on suit
+        // l'architecture demandée pour ne pas ralentir l'affichage.
+        const saveMessage = async () => {
+          try {
+            await prisma.message.create({
+              data: {
+                content: fullResponse,
+                role: "ASSISTANT",
+                conversationId: currentConversationId,
+              },
+            });
+          } catch (dbError) {
+            console.error("Error saving assistant message:", dbError);
+          }
+        };
+
+        // Exécution "en arrière-plan"
+        saveMessage();
       },
     });
 
