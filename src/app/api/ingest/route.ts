@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { generateEmbedding } from '@/lib/ai/embeddings';
 
 const ingestSchema = z.object({
   organizationId: z.string(),
@@ -13,28 +15,50 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { organizationId, title, content } = ingestSchema.parse(body);
 
-    // Simulation de l'extraction de texte et génération d'embeddings
     console.log(`Ingesting document: ${title} for org: ${organizationId}`);
 
-    // Dans une implémentation réelle, on utiliserait OpenAI Embeddings ici
-    // et on stockerait le vecteur avec prisma.$executeRaw ou une extension pgvector.
-
-    const knowledge = await prisma.knowledgeBase.create({
-      data: {
-        title,
-        content,
-        organizationId,
-        metadata: {
-          source: 'upload',
-          timestamp: new Date().toISOString(),
-        },
-      },
+    // 1. Chunking intelligent
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 1000,
+      chunkOverlap: 200,
     });
+
+    const chunks = await splitter.splitText(content);
+
+    // 2. Génération des embeddings et stockage pour chaque morceau
+    // Note: Dans une app de production, on ferait ça en parallèle ou via une file d'attente
+    for (const chunk of chunks) {
+      const embedding = await generateEmbedding(chunk);
+
+      // Conversion de l'embedding en format compatible PostgreSQL [1,2,3...]
+      const vectorString = `[${embedding.join(',')}]`;
+
+      // 3. Insertion avec SQL Brut pour le champ vector
+      await prisma.$executeRaw`
+        INSERT INTO "KnowledgeBase" (
+          id,
+          title,
+          content,
+          "organizationId",
+          embedding,
+          metadata,
+          "updatedAt"
+        )
+        VALUES (
+          ${crypto.randomUUID()},
+          ${title},
+          ${chunk},
+          ${organizationId},
+          ${vectorString}::vector,
+          ${JSON.stringify({ source: 'upload', timestamp: new Date().toISOString() })}::jsonb,
+          NOW()
+        )
+      `;
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Document ingéré avec succès",
-      data: knowledge
+      message: `${chunks.length} morceaux de document ingérés avec succès`,
     });
 
   } catch (error) {
