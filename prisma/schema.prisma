@@ -8,17 +8,19 @@ datasource db {
 }
 
 model Organization {
-  id            String         @id @default(cuid())
-  name          String
-  logo          String?
-  plan          Plan           @default(FREE)
-  credits       Int            @default(100)
-  users         User[]
-  agents        Agent[]
-  knowledgeBase KnowledgeBase[]
-  subscriptions Subscription[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                    String          @id @default(cuid())
+  name                  String
+  logo                  String?
+  plan                  Plan            @default(FREE)
+  credits               Int             @default(100)
+  whatsappPhoneNumberId String?
+  whatsappAccessToken   String?
+  users                 User[]
+  agents                Agent[]
+  knowledgeBase         KnowledgeBase[]
+  subscriptions         Subscription[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 }
 
 enum Plan {
@@ -48,9 +50,12 @@ enum Role {
 model Agent {
   id             String       @id @default(cuid())
   name           String
-  role           String       // e.g., "Comptable", "SAV"
+  role           String // e.g., "Comptable", "SAV"
   systemPrompt   String
   temperature    Float        @default(0.7)
+  status         AgentStatus  @default(ACTIVE)
+  templateId     String?
+  template       AgentTemplate? @relation(fields: [templateId], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   conversations  Conversation[]
@@ -58,6 +63,24 @@ model Agent {
   updatedAt      DateTime     @updatedAt
 
   @@index([organizationId])
+}
+
+enum AgentStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model AgentTemplate {
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  basePrompt    String
+  category      String
+  pricePerMonth Int      @default(0)
+  icon          String?
+  agents        Agent[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model KnowledgeBase {
