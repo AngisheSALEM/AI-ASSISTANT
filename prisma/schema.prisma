@@ -59,6 +59,7 @@ model Agent {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   conversations  Conversation[]
+  dailyReports   DailyReport[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -130,4 +131,16 @@ enum MessageRole {
   USER
   ASSISTANT
   SYSTEM
+}
+
+model DailyReport {
+  id           String   @id @default(cuid())
+  agentId      String
+  agent        Agent    @relation(fields: [agentId], references: [id])
+  date         DateTime
+  summaryText  String
+  createdAt    DateTime @default(now())
+
+  @@index([agentId])
+  @@index([date])
 }
