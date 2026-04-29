@@ -23,8 +23,8 @@ model Organization {
 
 enum Plan {
   FREE
-  PRO
-  ENTERPRISE
+  STANDARD
+  PREMIUM
 }
 
 model User {

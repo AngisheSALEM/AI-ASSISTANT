@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@langchain/core": "^1.1.42",
+    "@langchain/groq": "^1.2.0",
     "@langchain/openai": "^1.4.5",
     "@langchain/textsplitters": "^1.0.1",
     "@prisma/client": "^5.14.0",
