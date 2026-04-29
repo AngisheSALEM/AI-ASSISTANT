@@ -3,7 +3,7 @@ import { transcribeAudio, synthesizeSpeech } from "@/lib/ai/voice-engine";
 import prisma from "@/lib/prisma";
 import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
-import { getAgentModel } from "@/lib/ai/agent-engine";
+import { getModelForOrganization, CREDIT_COSTS } from "@/lib/ai/model-router";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 
@@ -27,8 +27,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    // Check credits (5 credits for voice)
-    const canProceed = await hasEnoughCredits(agent.organizationId, 5);
+    // Check credits (10 credits for voice)
+    const canProceed = await hasEnoughCredits(agent.organizationId, CREDIT_COSTS.VOICE);
     if (!canProceed) {
       return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
     }
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       .map((r) => `[Source: ${r.title}]\n${r.content}`)
       .join("\n\n");
 
-    const model = getAgentModel(agent.temperature);
+    const { model } = await getModelForOrganization(agent.organizationId, agent.temperature);
     const parser = new StringOutputParser();
 
     const responseText = await model.pipe(parser).invoke([
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     });
 
     // Déduire les crédits
-    await deductCredits(agent.organizationId, 5);
+    await deductCredits(agent.organizationId, CREDIT_COSTS.VOICE);
 
     // Retourner l'audio et la transcription
     return new Response(new Uint8Array(audioBuffer), {

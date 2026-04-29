@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
-import { getAgentModel } from "@/lib/ai/agent-engine";
+import { getModelForOrganization } from "@/lib/ai/model-router";
 import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 
@@ -29,8 +29,9 @@ export async function POST(
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    // Check credits before proceeding (1 credit for text)
-    const canProceed = await hasEnoughCredits(agent.organizationId, 1);
+    // 1b. Get model and check credits
+    const { model, cost } = await getModelForOrganization(agent.organizationId, agent.temperature);
+    const canProceed = await hasEnoughCredits(agent.organizationId, cost);
     if (!canProceed) {
       return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
     }
@@ -87,8 +88,7 @@ export async function POST(
       Si tu ne connais pas la réponse, dis-le poliment.
     `;
 
-    // 7. Initialiser le modèle et streamer la réponse
-    const model = getAgentModel(agent.temperature);
+    // 7. Streamer la réponse
     const parser = new StringOutputParser();
 
     const stream = await model.pipe(parser).stream([
@@ -132,9 +132,9 @@ export async function POST(
         // Exécution "en arrière-plan"
         await saveMessage();
 
-        // Deduct 1 credit after successful message processing
+        // Deduct credits after successful message processing
         try {
-          await deductCredits(agent.organizationId, 1);
+          await deductCredits(agent.organizationId, cost);
         } catch (creditError) {
           console.error("Error deducting credits:", creditError);
         }
