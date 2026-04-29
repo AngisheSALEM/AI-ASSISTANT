@@ -1,5 +1,20 @@
 import type { Metadata } from "next";
+import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
+import { PageTransition } from "@/components/ui/PageTransition";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  axes: ["SOFT"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Agentia-Kin | SaaS AI Agents",
@@ -12,8 +27,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
-      <body>{children}</body>
+    <html lang="fr" className={`${inter.variable} ${fraunces.variable}`}>
+      <body className="antialiased">
+        <div className="deep-space-bg">
+          <div className="noise-overlay" />
+          <div className="glow-circle glow-violet" />
+          <div className="glow-circle glow-blue" />
+        </div>
+        <PageTransition>{children}</PageTransition>
+      </body>
     </html>
   );
 }
