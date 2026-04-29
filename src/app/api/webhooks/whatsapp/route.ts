@@ -8,8 +8,6 @@ import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
-const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
-const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const WHATSAPP_APP_SECRET = process.env.WHATSAPP_APP_SECRET;
 
 function verifySignature(payload: string, signature: string) {
@@ -58,21 +56,27 @@ export async function POST(req: Request) {
 
     const from = message.from; // Numéro de téléphone de l'utilisateur
     const text = message.text.body;
-    const to = value?.metadata?.display_phone_number; // Numéro de téléphone de l'organisation
+    const phoneId = value?.metadata?.phone_number_id; // ID du numéro WhatsApp de destination
 
-    // Recherche de l'agent basé sur le numéro de téléphone de destination (si configuré dans l'organisation)
-    // ou une autre logique de multi-tenancy. Ici on simule une recherche par organizationId si on l'avait dans le webhook.
-    // Pour être multi-tenant safe, on pourrait chercher une organisation qui a ce numéro associé.
+    // Recherche de l'organisation liée à ce whatsappPhoneNumberId
+    const organization = await prisma.organization.findFirst({
+      where: {
+        whatsappPhoneNumberId: phoneId,
+      },
+    });
+
+    if (!organization || !organization.whatsappAccessToken) {
+      return NextResponse.json({ error: "Organization not configured for this phone number" }, { status: 404 });
+    }
+
+    // Trouver l'agent actif pour cette organisation
+    // S'il y en a plusieurs, on pourrait avoir une logique plus complexe
+    // Ici on prend le premier agent actif.
     const agent = await prisma.agent.findFirst({
       where: {
-        organization: {
-          // Simulation : On pourrait avoir un champ phone dans Organization
-          // Pour l'instant on filtre par un critère qui rend la requête plus spécifique
-          // ou on utilise un Header spécifique envoyé par WhatsApp (X-Organization-Id si via un proxy)
-          name: { contains: "" }
-        }
+        organizationId: organization.id,
+        status: "ACTIVE",
       },
-      include: { organization: true },
     });
 
     if (!agent) {
@@ -105,10 +109,10 @@ export async function POST(req: Request) {
     ]);
 
     // 3. Envoyer la réponse via WhatsApp
-    await fetch(`https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`, {
+    await fetch(`https://graph.facebook.com/v19.0/${phoneId}/messages`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+        "Authorization": `Bearer ${organization.whatsappAccessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
