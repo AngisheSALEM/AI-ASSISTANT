@@ -23,7 +23,14 @@ Pour activer le support des vecteurs dans votre base PostgreSQL :
 ```bash
 npm install
 npx prisma generate
+npm run db:setup
 npm run dev
+```
+
+### Initialisation de la Base de Données
+Si vous rencontrez des erreurs indiquant que des tables (comme `Organization`) n'existent pas, exécutez la commande suivante pour synchroniser le schéma Prisma avec votre base de données et charger les données initiales :
+```bash
+npm run db:setup
 ```
 
 ## Structure du Projet
