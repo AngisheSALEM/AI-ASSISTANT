@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { Card, Title, Text, Button, Flex, Badge } from "@tremor/react";
+import { Title, Text, Button, Flex, Badge } from "@tremor/react";
 import { MessageCircle, Mail, Globe, Calendar, Zap, MessageSquare, Bot } from "lucide-react";
+import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 
 export default function IntegrationsPage() {
   const integrations = [
@@ -17,15 +18,15 @@ export default function IntegrationsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight dark:text-white font-fraunces">Integrations</h1>
-        <p className="text-gray-500 dark:text-white/50 mt-1">Connectez vos agents à vos outils préférés et vos canaux de vente.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-text-primary dark:text-white font-fraunces">Integrations</h1>
+        <p className="text-text-secondary dark:text-white/50 mt-1">Connectez vos agents à vos outils préférés et vos canaux de vente.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {integrations.map((app, i) => (
-          <Card key={i} className="flex flex-col h-full hover:shadow-lg transition-all duration-300 border-gray-100 dark:border-white/5">
+          <PremiumGlassCard key={i} className="flex flex-col h-full p-6">
             <Flex alignItems="start">
-              <div className={`p-4 bg-gray-50 dark:bg-white/5 rounded-2xl ${app.color}`}>
+              <div className={`p-4 bg-black/5 dark:bg-white/5 rounded-2xl ${app.color}`}>
                 <app.icon size={24} />
               </div>
               <Badge color={app.status === "Connected" ? "emerald" : "gray"}>
@@ -33,22 +34,22 @@ export default function IntegrationsPage() {
               </Badge>
             </Flex>
             <div className="mt-6 flex-grow">
-              <Title className="dark:text-white">{app.name}</Title>
+              <h3 className="text-xl font-bold text-text-primary dark:text-white">{app.name}</h3>
               <Text className="text-xs font-medium uppercase tracking-wider text-blue-500 mt-1">{app.category}</Text>
-              <Text className="mt-4 text-sm leading-relaxed dark:text-white/60">
+              <Text className="mt-4 text-sm leading-relaxed text-text-secondary dark:text-white/60">
                 {app.desc}
               </Text>
             </div>
-            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5">
+            <div className="mt-8 pt-6 border-t border-black/5 dark:border-white/5">
                <Button variant={app.status === "Connected" ? "secondary" : "primary"} className="w-full">
                   {app.status === "Connected" ? "Configurer" : "Installer"}
                </Button>
             </div>
-          </Card>
+          </PremiumGlassCard>
         ))}
       </div>
 
-      <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 border-none">
+      <PremiumGlassCard className="bg-gradient-to-r from-blue-600 to-indigo-700 border-none p-8">
         <Flex>
            <div className="space-y-2">
               <Title className="text-white">Besoin d'une intégration sur mesure ?</Title>
@@ -56,7 +57,7 @@ export default function IntegrationsPage() {
            </div>
            <Button icon={Bot}>Contacter le support</Button>
         </Flex>
-      </Card>
+      </PremiumGlassCard>
     </div>
   );
 }

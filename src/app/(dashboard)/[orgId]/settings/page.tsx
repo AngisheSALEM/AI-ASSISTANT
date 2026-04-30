@@ -27,8 +27,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight dark:text-white font-fraunces">Settings</h1>
-        <p className="text-gray-500 dark:text-white/50 mt-1">Gérez vos préférences de compte et les paramètres de l'organisation.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-text-primary dark:text-white font-fraunces">Settings</h1>
+        <p className="text-text-secondary dark:text-white/50 mt-1">Gérez vos préférences de compte et les paramètres de l'organisation.</p>
       </header>
 
       <div className="space-y-8">
@@ -39,14 +39,14 @@ export default function SettingsPage() {
                 <Sun size={20} className="dark:hidden" />
                 <Moon size={20} className="hidden dark:block" />
              </div>
-             <Title className="dark:text-white">Apparence</Title>
+             <h3 className="text-xl font-bold text-text-primary dark:text-white">Apparence</h3>
           </div>
 
           <div className="space-y-6">
-             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5">
+             <div className="flex items-center justify-between p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
                 <div>
-                   <Text className="font-bold dark:text-white">Thème de l'interface</Text>
-                   <Text className="text-xs dark:text-white/40">Personnalisez votre expérience visuelle.</Text>
+                   <Text className="font-bold text-text-primary dark:text-white">Thème de l'interface</Text>
+                   <Text className="text-xs text-text-secondary dark:text-white/40">Personnalisez votre expérience visuelle.</Text>
                 </div>
                 <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/10 p-1 rounded-xl">
                    <button
@@ -78,17 +78,17 @@ export default function SettingsPage() {
              <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-lg text-violet-600">
                 <User size={20} />
              </div>
-             <Title className="dark:text-white">Profil Personnel</Title>
+             <h3 className="text-xl font-bold text-text-primary dark:text-white">Profil Personnel</h3>
           </div>
 
           <div className="space-y-6">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                   <Text className="text-sm font-medium dark:text-white text-xs uppercase tracking-widest font-bold">Nom Complet</Text>
+                   <Text className="text-sm font-medium text-text-primary dark:text-white text-xs uppercase tracking-widest font-bold">Nom Complet</Text>
                    <TextInput placeholder="ex: Jean Dupont" className="bg-white/5 border-white/10" />
                 </div>
                 <div className="space-y-2">
-                   <Text className="text-sm font-medium dark:text-white text-xs uppercase tracking-widest font-bold">Email Professionnel</Text>
+                   <Text className="text-sm font-medium text-text-primary dark:text-white text-xs uppercase tracking-widest font-bold">Email Professionnel</Text>
                    <TextInput placeholder="jean@k-solutions.cd" disabled className="bg-white/5 border-white/10" />
                 </div>
              </div>
@@ -102,16 +102,16 @@ export default function SettingsPage() {
              <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg text-emerald-600">
                 <Building2 size={20} />
              </div>
-             <Title className="dark:text-white">Organisation</Title>
+             <h3 className="text-xl font-bold text-text-primary dark:text-white">Organisation</h3>
           </div>
 
           <div className="space-y-6">
              <div className="space-y-2">
-                <Text className="text-sm font-medium dark:text-white text-xs uppercase tracking-widest font-bold">Nom de l'entreprise</Text>
+                <Text className="text-sm font-medium text-text-primary dark:text-white text-xs uppercase tracking-widest font-bold">Nom de l'entreprise</Text>
                 <TextInput placeholder="K-Solutions SARL" className="bg-white/5 border-white/10" />
              </div>
              <div className="space-y-2">
-                <Text className="text-sm font-medium dark:text-white text-xs uppercase tracking-widest font-bold">Identifiant WhatsApp Business</Text>
+                <Text className="text-sm font-medium text-text-primary dark:text-white text-xs uppercase tracking-widest font-bold">Identifiant WhatsApp Business</Text>
                 <TextInput icon={Smartphone} placeholder="WABA-ID-123456789" className="bg-white/5 border-white/10" />
              </div>
              <Button variant="secondary" className="rounded-xl">Sauvegarder les changements</Button>
@@ -122,7 +122,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
            <PremiumGlassCard className="p-8">
               <Flex className="mb-4">
-                 <Title className="dark:text-white">Notifications</Title>
+                 <h3 className="text-xl font-bold text-text-primary dark:text-white">Notifications</h3>
                  <Bell size={20} className="text-gray-400" />
               </Flex>
               <div className="space-y-4">
@@ -133,8 +133,8 @@ export default function SettingsPage() {
                  ].map((item, i) => (
                    <Flex key={i} className="py-2">
                       <div>
-                         <Text className="font-bold dark:text-white text-xs">{item.label}</Text>
-                         <Text className="text-[10px] dark:text-white/40">{item.desc}</Text>
+                         <Text className="font-bold text-text-primary dark:text-white text-xs">{item.label}</Text>
+                         <Text className="text-[10px] text-text-secondary dark:text-white/40">{item.desc}</Text>
                       </div>
                       <Switch defaultChecked />
                    </Flex>
@@ -144,7 +144,7 @@ export default function SettingsPage() {
 
            <PremiumGlassCard className="p-8">
               <Flex className="mb-4">
-                 <Title className="dark:text-white">Sécurité</Title>
+                 <h3 className="text-xl font-bold text-text-primary dark:text-white">Sécurité</h3>
                  <Shield size={20} className="text-gray-400" />
               </Flex>
               <div className="space-y-6">
