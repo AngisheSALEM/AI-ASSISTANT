@@ -4,7 +4,7 @@ Pour que le projet Agentia-Kin fonctionne correctement sur Vercel, les variables
 
 ## Base de données
 - `DATABASE_URL`: URL de connexion PostgreSQL (ex: de Supabase ou Neon). Doit inclure l'extension pgvector.
-- `DIRECT_URL`: URL de connexion directe (optionnel, utilisé pour les migrations Prisma).
+- `DIRECT_URL`: URL de connexion directe. **Obligatoire** car configurée dans le schéma Prisma pour supporter le pooling de connexions.
 
 ## OpenAI (RAG & Transcription)
 - `OPENAI_API_KEY`: Votre clé API OpenAI.
