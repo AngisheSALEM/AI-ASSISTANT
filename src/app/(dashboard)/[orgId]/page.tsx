@@ -14,10 +14,11 @@ import {
   MessageCircle,
   FileText
 } from "lucide-react";
-import { AreaChart, DonutChart, Card, Title, Text, Badge, Flex, ProgressBar } from "@/components/ui/TremorComponents";
+import { DonutChart, Card, Title, Text, Badge, Flex, ProgressBar } from "@/components/ui/TremorComponents";
 import RecentActivity from "@/components/RecentActivity";
 import RechargeButton from "@/components/RechargeButton";
 import Link from "next/link";
+import { DashboardAreaChart } from "@/components/dashboard/DashboardCharts";
 
 export default async function DashboardPage({
   params,
@@ -210,15 +211,9 @@ export default async function DashboardPage({
               </div>
             </div>
           ) : (
-            <AreaChart
+            <DashboardAreaChart
               className="h-72 mt-4"
               data={chartData}
-              index="date"
-              categories={["Messages"]}
-              colors={["blue"]}
-              valueFormatter={(number: number) =>
-                Intl.NumberFormat("us").format(number).toString()
-              }
             />
           )}
         </Card>
