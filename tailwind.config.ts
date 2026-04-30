@@ -2,6 +2,7 @@ import type { Config } from "tailwindcss";
 import colors from "tailwindcss/colors";
 
 const config: Config = {
+  darkMode: ["class"],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -20,8 +21,20 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        border: "var(--border)",
         zinc: {
           950: "#09090b",
+        },
+        // Custom Light Theme Colors
+        light: {
+          bg: "#FFFFFF",
+          subtle: "#F7F8FA",
+          border: "#E4E7EB",
+          primary: "#121417",
+          secondary: "#636C77",
+          accent: "#3B82F6",
+          purple: "#8B5CF6",
+          success: "#10B981",
         },
         // tremor colors
         tremor: {
@@ -34,22 +47,22 @@ const config: Config = {
             inverted: colors.white,
           },
           background: {
-            muted: colors.gray[50],
-            subtle: colors.gray[100],
-            DEFAULT: colors.white,
-            emphasis: colors.gray[700],
+            muted: "var(--tremor-background-muted)",
+            subtle: "var(--tremor-background-subtle)",
+            DEFAULT: "var(--tremor-background-default)",
+            emphasis: "var(--tremor-background-emphasis)",
           },
           border: {
-            DEFAULT: colors.gray[200],
+            DEFAULT: "var(--tremor-border-default)",
           },
           ring: {
-            DEFAULT: colors.gray[200],
+            DEFAULT: "var(--tremor-ring-default)",
           },
           content: {
-            subtle: colors.gray[400],
-            DEFAULT: colors.gray[500],
-            emphasis: colors.gray[700],
-            strong: colors.gray[900],
+            subtle: "var(--tremor-content-subtle)",
+            DEFAULT: "var(--tremor-content-default)",
+            emphasis: "var(--tremor-content-emphasis)",
+            strong: "var(--tremor-content-strong)",
             inverted: colors.white,
           },
         },

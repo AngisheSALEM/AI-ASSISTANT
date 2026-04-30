@@ -50,13 +50,13 @@ export default function LoginPage() {
           <div className="p-2 bg-white/10 rounded-xl group-hover:rotate-12 transition-transform">
             <Zap className="h-6 w-6 text-white" />
           </div>
-          <span className="ml-3 text-2xl font-bold font-fraunces tracking-tighter text-white">Agentia-Kin</span>
+          <span className="ml-3 text-2xl font-bold font-fraunces tracking-tighter text-white">Opere</span>
         </Link>
 
         <PremiumGlassCard className="p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold font-fraunces text-white mb-2">Bon retour !</h1>
-            <p className="text-white/50 text-sm">Connectez-vous à votre compte Agentia-Kin</p>
+            <p className="text-white/50 text-sm">Connectez-vous à votre compte Opere</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

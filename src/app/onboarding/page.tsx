@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Building2, Loader2, Rocket } from "lucide-react";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
+import { FloatingChatbot } from "@/components/FloatingChatbot";
 
 export default function OnboardingPage() {
   const { data: session, status, update } = useSession();
@@ -66,7 +67,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -128,6 +129,8 @@ export default function OnboardingPage() {
           </div>
         </PremiumGlassCard>
       </motion.div>
+
+      <FloatingChatbot />
     </div>
   );
 }
