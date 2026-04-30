@@ -44,7 +44,7 @@ export default function LandingPage() {
           >
             <Zap className="h-6 w-6 text-white" />
           </motion.div>
-          <span className="ml-3 text-xl font-bold font-fraunces tracking-tighter">Agentia-Kin</span>
+          <span className="ml-3 text-xl font-bold font-fraunces tracking-tighter">Opere</span>
         </Link>
         <nav className="ml-auto flex gap-8">
           <Link className="text-sm font-medium text-white/60 hover:text-white transition-colors" href="#features">
@@ -274,7 +274,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="flex flex-col gap-6 sm:flex-row py-12 w-full shrink-0 items-center px-10 border-t border-white/5 text-white/40">
-        <p className="text-xs">© 2024 Agentia-Kin. Technologie de classe mondiale.</p>
+        <p className="text-xs">© 2024 Opere. Technologie de classe mondiale.</p>
         <nav className="sm:ml-auto flex gap-8">
           <Link className="text-xs hover:text-white transition-colors" href="#">
             Conditions

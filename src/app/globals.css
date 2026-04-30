@@ -2,9 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #000000;
-  --foreground: #ffffff;
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #121417;
+    --border: #E4E7EB;
+
+    --tremor-background-muted: #f9fafb;
+    --tremor-background-subtle: #f3f4f6;
+    --tremor-background-default: #ffffff;
+    --tremor-background-emphasis: #374151;
+    --tremor-border-default: #e5e7eb;
+    --tremor-ring-default: #e5e7eb;
+    --tremor-content-subtle: #9ca3af;
+    --tremor-content-default: #6b7280;
+    --tremor-content-emphasis: #374151;
+    --tremor-content-strong: #111827;
+  }
+
+  .dark {
+    --background: #000000;
+    --foreground: #ffffff;
+    --border: rgba(255, 255, 255, 0.1);
+
+    --tremor-background-muted: #111827;
+    --tremor-background-subtle: #1f2937;
+    --tremor-background-default: #000000;
+    --tremor-background-emphasis: #d1d5db;
+    --tremor-border-default: #374151;
+    --tremor-ring-default: #1f2937;
+    --tremor-content-subtle: #4b5563;
+    --tremor-content-default: #9ca3af;
+    --tremor-content-emphasis: #e5e7eb;
+    --tremor-content-strong: #f9fafb;
+  }
 }
 
 body {
@@ -14,10 +45,6 @@ body {
 }
 
 @layer base {
-  body {
-    @apply bg-black selection:bg-white/30;
-  }
-
   h1, h2, h3, h4, h5, h6, .font-fraunces {
     font-variation-settings: "SOFT" 100;
   }

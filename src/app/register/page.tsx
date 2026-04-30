@@ -56,7 +56,7 @@ export default function RegisterPage() {
           <div className="p-2 bg-white/10 rounded-xl group-hover:rotate-12 transition-transform">
             <Zap className="h-6 w-6 text-white" />
           </div>
-          <span className="ml-3 text-2xl font-bold font-fraunces tracking-tighter text-white">Agentia-Kin</span>
+          <span className="ml-3 text-2xl font-bold font-fraunces tracking-tighter text-white">Opere</span>
         </Link>
 
         <PremiumGlassCard className="p-8">

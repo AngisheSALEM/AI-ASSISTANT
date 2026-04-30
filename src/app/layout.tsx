@@ -3,6 +3,7 @@ import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,7 +19,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Agentia-Kin | SaaS AI Agents",
+  title: "Opere | SaaS AI Agents",
   description: "Plateforme SaaS d'Agents IA professionnels pour les entreprises de Kinshasa.",
 };
 
@@ -28,16 +29,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="fr" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
       <body className="antialiased">
-        <AuthProvider>
-          <div className="deep-space-bg">
-            <div className="noise-overlay" />
-            <div className="glow-circle glow-violet" />
-            <div className="glow-circle glow-blue" />
-          </div>
-          <PageTransition>{children}</PageTransition>
-        </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AuthProvider>
+            <div className="deep-space-bg dark:block hidden">
+              <div className="noise-overlay" />
+              <div className="glow-circle glow-violet" />
+              <div className="glow-circle glow-blue" />
+            </div>
+            <PageTransition>{children}</PageTransition>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
