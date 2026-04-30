@@ -79,18 +79,18 @@ export default function Sidebar({ orgId }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-72 bg-white dark:bg-black/50 backdrop-blur-xl border-r border-gray-200 dark:border-white/5 flex flex-col h-screen sticky top-0 transition-colors">
+    <aside className="w-72 bg-white/70 dark:bg-black/50 backdrop-blur-xl border-r border-black/5 dark:border-white/5 flex flex-col h-screen sticky top-0 transition-colors">
       <div className="p-8">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="p-2 bg-gray-900 dark:bg-white/10 rounded-lg group-hover:scale-110 transition-transform">
+          <div className="p-2 bg-zinc-900 dark:bg-white/10 rounded-lg group-hover:scale-110 transition-transform">
             <Zap size={20} className="text-white" />
           </div>
-          <h1 className="text-xl font-bold font-fraunces tracking-tighter text-gray-900 dark:text-white">Opere</h1>
+          <h1 className="text-xl font-bold font-fraunces tracking-tighter text-text-primary dark:text-white">Opere</h1>
         </Link>
       </div>
 
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-        <div className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-white/30">
+        <div className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary dark:text-white/30">
           Menu Principal
         </div>
         {menuItems.map((item) => {
@@ -102,11 +102,11 @@ export default function Sidebar({ orgId }: SidebarProps) {
               className={cn(
                 "flex items-center space-x-3 px-4 py-3 rounded-xl transition-all group",
                 isActive
-                  ? "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-500 dark:text-white/60 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5"
+                  ? "bg-black/5 dark:bg-white/10 text-text-primary dark:text-white shadow-sm"
+                  : "text-text-secondary dark:text-white/60 hover:text-text-primary dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/5"
               )}
             >
-              <item.icon size={20} className={cn("transition-transform group-hover:scale-110", isActive && "text-blue-500 dark:text-cyan-400")} />
+              <item.icon size={20} className={cn("transition-transform group-hover:scale-110", isActive && "text-blue-600 dark:text-cyan-400")} />
               <span className="text-sm font-medium">{item.name}</span>
             </Link>
           );
@@ -115,14 +115,14 @@ export default function Sidebar({ orgId }: SidebarProps) {
 
       <div className="p-6 mt-auto">
         {orgData && (
-          <div className="p-5 mb-6 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 space-y-6">
+          <div className="p-5 mb-6 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5 space-y-6">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-white/40">Plan</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary dark:text-white/40">Plan</span>
               <span className={cn(
                 "text-[10px] px-2 py-0.5 rounded-full font-black tracking-widest uppercase border",
                 orgData.plan === "PREMIUM"
                   ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20"
-                  : "bg-gray-200/50 dark:bg-white/10 text-gray-600 dark:text-white/60 border-transparent"
+                  : "bg-black/10 dark:bg-white/10 text-text-primary dark:text-white/60 border-transparent"
               )}>
                 {orgData.plan}
               </span>
@@ -136,7 +136,7 @@ export default function Sidebar({ orgId }: SidebarProps) {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleUpgrade}
                 disabled={loading}
-                className="w-full flex items-center justify-center space-x-2 bg-gray-900 dark:bg-white text-white dark:text-black py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-black/5 dark:shadow-white/5 disabled:opacity-50"
+                className="w-full flex items-center justify-center space-x-2 bg-zinc-900 dark:bg-white text-white dark:text-black py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-black/5 dark:shadow-white/5 disabled:opacity-50"
               >
                 <Zap size={14} fill="currentColor" />
                 <span>{loading ? "..." : "Upgrade"}</span>

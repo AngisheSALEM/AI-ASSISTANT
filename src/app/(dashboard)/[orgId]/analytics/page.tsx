@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { Card, Title, Text, AreaChart, BarChart, DonutChart, Grid, Col, Metric, BadgeDelta, Flex, Badge } from "@tremor/react";
+import { Title, Text, AreaChart, BarChart, DonutChart, Grid, Col, Metric, BadgeDelta, Flex, Badge } from "@tremor/react";
 import { TrendingUp, Users, MessageSquare, Clock, FileText, Download } from "lucide-react";
+import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 
 const chartdata = [
   { date: "Jan 23", "Interactions": 2890, "Résolutions": 2338 },
@@ -25,8 +26,8 @@ export default function AnalyticsPage() {
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
       <header className="flex justify-between items-end">
         <div>
-           <h1 className="text-3xl font-bold tracking-tight dark:text-white font-fraunces">Insights & Reports</h1>
-           <p className="text-gray-500 dark:text-white/50 mt-1">Analyse détaillée de la performance de vos agents IA.</p>
+           <h1 className="text-3xl font-bold tracking-tight text-text-primary dark:text-white font-fraunces">Insights & Reports</h1>
+           <p className="text-text-secondary dark:text-white/50 mt-1">Analyse détaillée de la performance de vos agents IA.</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-black rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95">
            <Download size={18} />
@@ -35,43 +36,43 @@ export default function AnalyticsPage() {
       </header>
 
       <Grid numItemsLg={4} className="gap-6">
-        <Card decoration="top" decorationColor="blue">
+        <PremiumGlassCard className="p-6">
           <Flex alignItems="start">
-            <Text>Volume Total</Text>
+            <Text className="text-text-secondary dark:text-white/70">Volume Total</Text>
             <BadgeDelta deltaType="moderateIncrease" />
           </Flex>
-          <Metric>14,723</Metric>
-          <Text className="mt-2 text-xs">Messages gérés ce mois</Text>
-        </Card>
-        <Card decoration="top" decorationColor="emerald">
+          <Metric className="text-text-primary dark:text-white">14,723</Metric>
+          <Text className="mt-2 text-xs text-text-secondary dark:text-white/40">Messages gérés ce mois</Text>
+        </PremiumGlassCard>
+        <PremiumGlassCard className="p-6">
           <Flex alignItems="start">
-            <Text>Taux de Satisfaction</Text>
+            <Text className="text-text-secondary dark:text-white/70">Taux de Satisfaction</Text>
             <BadgeDelta deltaType="increase" />
           </Flex>
-          <Metric>94.2%</Metric>
-          <Text className="mt-2 text-xs">Basé sur les retours clients</Text>
-        </Card>
-        <Card decoration="top" decorationColor="orange">
+          <Metric className="text-text-primary dark:text-white">94.2%</Metric>
+          <Text className="mt-2 text-xs text-text-secondary dark:text-white/40">Basé sur les retours clients</Text>
+        </PremiumGlassCard>
+        <PremiumGlassCard className="p-6">
           <Flex alignItems="start">
-            <Text>Temps Moyen de Réponse</Text>
+            <Text className="text-text-secondary dark:text-white/70">Temps Moyen de Réponse</Text>
             <BadgeDelta deltaType="decrease" />
           </Flex>
-          <Metric>1.2s</Metric>
-          <Text className="mt-2 text-xs">Vs 4.5m pour un humain</Text>
-        </Card>
-        <Card decoration="top" decorationColor="violet">
+          <Metric className="text-text-primary dark:text-white">1.2s</Metric>
+          <Text className="mt-2 text-xs text-text-secondary dark:text-white/40">Vs 4.5m pour un humain</Text>
+        </PremiumGlassCard>
+        <PremiumGlassCard className="p-6">
           <Flex alignItems="start">
-            <Text>Coût par Résolution</Text>
+            <Text className="text-text-secondary dark:text-white/70">Coût par Résolution</Text>
             <BadgeDelta deltaType="moderateDecrease" />
           </Flex>
-          <Metric>0.08 $</Metric>
-          <Text className="mt-2 text-xs">Crédits convertis en USD</Text>
-        </Card>
+          <Metric className="text-text-primary dark:text-white">0.08 $</Metric>
+          <Text className="mt-2 text-xs text-text-secondary dark:text-white/40">Crédits convertis en USD</Text>
+        </PremiumGlassCard>
       </Grid>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
-          <Title>Évolution des Conversations</Title>
+        <PremiumGlassCard className="p-6">
+          <h3 className="text-xl font-bold text-text-primary dark:text-white mb-6">Évolution des Conversations</h3>
           <AreaChart
             className="h-72 mt-4"
             data={chartdata}
@@ -79,9 +80,9 @@ export default function AnalyticsPage() {
             categories={["Interactions", "Résolutions"]}
             colors={["blue", "emerald"]}
           />
-        </Card>
-        <Card>
-          <Title>Répartition par Catégorie</Title>
+        </PremiumGlassCard>
+        <PremiumGlassCard className="p-6">
+          <h3 className="text-xl font-bold text-text-primary dark:text-white mb-6">Répartition par Catégorie</h3>
           <DonutChart
             className="h-72 mt-4"
             data={categories}
@@ -89,28 +90,28 @@ export default function AnalyticsPage() {
             index="name"
             colors={["blue", "cyan", "indigo", "violet"]}
           />
-        </Card>
+        </PremiumGlassCard>
       </div>
 
-      <Card>
-        <Title>Historique des Rapports Quotidiens</Title>
+      <PremiumGlassCard className="p-6">
+        <h3 className="text-xl font-bold text-text-primary dark:text-white mb-6">Historique des Rapports Quotidiens</h3>
         <div className="mt-6 space-y-4">
            {[1, 2, 3, 4].map((i) => (
-             <div key={i} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 transition-all hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer">
+             <div key={i} className="flex items-center justify-between p-4 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5 transition-all hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer">
                 <div className="flex items-center gap-4">
                    <div className="p-3 bg-blue-100 dark:bg-blue-500/20 rounded-xl text-blue-600">
                       <FileText size={20} />
                    </div>
                    <div>
-                      <Text className="font-bold dark:text-white">Rapport du {15 - i} Octobre 2024</Text>
-                      <Text className="text-xs dark:text-white/40">Résumé généré par IA • 128 conversations analysées</Text>
+                      <Text className="font-bold text-text-primary dark:text-white">Rapport du {15 - i} Octobre 2024</Text>
+                      <Text className="text-xs text-text-secondary dark:text-white/40">Résumé généré par IA • 128 conversations analysées</Text>
                    </div>
                 </div>
                 <Badge color="blue">Premium</Badge>
              </div>
            ))}
         </div>
-      </Card>
+      </PremiumGlassCard>
     </div>
   );
 }

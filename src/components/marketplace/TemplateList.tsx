@@ -54,34 +54,34 @@ export function TemplateList({ templates, orgId }: TemplateListProps) {
           <motion.div key={template.id} variants={item}>
             <PremiumGlassCard className="flex flex-col h-full p-8">
               <div className="flex items-start justify-between mb-6">
-                <div className="p-3 bg-white/10 rounded-2xl border border-white/10">
-                  <Icon className="h-6 w-6 text-white" />
+                <div className="p-3 bg-black/5 dark:bg-white/10 rounded-2xl border border-black/5 dark:border-white/10">
+                  <Icon className="h-6 w-6 text-text-primary dark:text-white" />
                 </div>
-                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-white/40">
+                <span className="px-3 py-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-text-secondary dark:text-white/40">
                   {template.category}
                 </span>
               </div>
 
-              <h3 className="text-2xl font-bold font-fraunces tracking-tight text-white mb-3">
+              <h3 className="text-2xl font-bold font-fraunces tracking-tight text-text-primary dark:text-white mb-3">
                 {template.name}
               </h3>
 
-              <p className="text-white/50 text-sm leading-relaxed mb-8 flex-grow line-clamp-3">
+              <p className="text-text-secondary dark:text-white/50 text-sm leading-relaxed mb-8 flex-grow line-clamp-3">
                 {template.description}
               </p>
 
-              <div className="flex items-center gap-2 mb-8 p-3 bg-white/5 rounded-xl border border-white/5">
-                <Cpu size={16} className="text-cyan-400" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-                  Cerveau: <span className="text-white">GPT-4o / Claude 3.5</span>
+              <div className="flex items-center gap-2 mb-8 p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
+                <Cpu size={16} className="text-blue-500 dark:text-cyan-400" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary dark:text-white/60">
+                  Cerveau: <span className="text-text-primary dark:text-white">GPT-4o / Claude 3.5</span>
                 </span>
               </div>
 
-              <div className="pt-6 border-t border-white/10 flex items-center justify-between">
+              <div className="pt-6 border-t border-black/5 dark:border-white/10 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1">Location</p>
-                  <p className="text-xl font-bold text-white font-fraunces">
-                    {template.pricePerMonth} <span className="text-sm font-normal text-white/40">crédits/mois</span>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-text-secondary dark:text-white/30 mb-1">Location</p>
+                  <p className="text-xl font-bold text-text-primary dark:text-white font-fraunces">
+                    {template.pricePerMonth} <span className="text-sm font-normal text-text-secondary dark:text-white/40">crédits/mois</span>
                   </p>
                 </div>
                 <RentButton
@@ -97,8 +97,8 @@ export function TemplateList({ templates, orgId }: TemplateListProps) {
       })}
 
       {templates.length === 0 && (
-        <div className="col-span-full py-24 text-center border-2 border-dashed border-white/10 rounded-3xl">
-           <p className="text-white/30 font-medium">Aucun template disponible pour le moment.</p>
+        <div className="col-span-full py-24 text-center border-2 border-dashed border-black/10 dark:border-white/10 rounded-3xl">
+           <p className="text-text-secondary dark:text-white/30 font-medium">Aucun template disponible pour le moment.</p>
         </div>
       )}
     </motion.div>

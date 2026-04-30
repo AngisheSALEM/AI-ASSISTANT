@@ -8,8 +8,12 @@ export function AgentsHeader({ orgId }: { orgId: string }) {
   return (
     <div className="flex justify-between items-center mb-8">
       <div>
-        <Title>Mes Employés IA</Title>
-        <Text>Gérez vos agents actifs et leur configuration.</Text>
+        <h1 className="text-3xl font-bold font-fraunces tracking-tight text-text-primary dark:text-white">
+          Mes Employés IA
+        </h1>
+        <p className="text-text-secondary dark:text-white/50">
+          Gérez vos agents actifs et leur configuration.
+        </p>
       </div>
       <Link href={`/${orgId}/marketplace`}>
         <Button icon={User}>Recruter un nouvel agent</Button>

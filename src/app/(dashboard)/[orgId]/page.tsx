@@ -14,7 +14,8 @@ import {
   MessageCircle,
   FileText
 } from "lucide-react";
-import { DonutChart, Card, Title, Text, Badge, Flex, ProgressBar } from "@/components/ui/TremorComponents";
+import { DonutChart, Title, Text, Badge, Flex, ProgressBar } from "@/components/ui/TremorComponents";
+import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 import RecentActivity from "@/components/RecentActivity";
 import RechargeButton from "@/components/RechargeButton";
 import Link from "next/link";
@@ -132,9 +133,9 @@ export default async function DashboardPage({
 
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight dark:text-white">Tableau de bord</h1>
-          <p className="text-gray-500 dark:text-white/50 mt-1">
-            Organisation : <span className="font-medium text-gray-900 dark:text-white">{organization.name}</span>
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary dark:text-white font-fraunces">Tableau de bord</h1>
+          <p className="text-text-secondary dark:text-white/50 mt-1">
+            Organisation : <span className="font-medium text-text-primary dark:text-white">{organization.name}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -144,70 +145,70 @@ export default async function DashboardPage({
 
       {/* Analytics Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card decoration="top" decorationColor="blue">
+        <PremiumGlassCard className="p-6">
           <Flex alignItems="start">
             <div>
-              <Text className="dark:text-white/60">Total Interactions</Text>
-              <Title className="text-2xl mt-1 dark:text-white">{totalMessages}</Title>
+              <Text className="text-text-secondary dark:text-white/60">Total Interactions</Text>
+              <h4 className="text-2xl font-bold mt-1 text-text-primary dark:text-white">{totalMessages}</h4>
             </div>
             <MessageSquare className="text-blue-500" size={20} />
           </Flex>
           <Flex className="mt-4">
-             <Text className="truncate dark:text-white/40 text-xs">Messages gérés par l'IA</Text>
+             <Text className="truncate text-text-secondary dark:text-white/40 text-xs">Messages gérés par l'IA</Text>
              <Badge color="blue">+12%</Badge>
           </Flex>
-        </Card>
+        </PremiumGlassCard>
 
-        <Card decoration="top" decorationColor="emerald">
+        <PremiumGlassCard className="p-6">
           <Flex alignItems="start">
             <div>
-              <Text className="dark:text-white/60">Taux de Résolution</Text>
-              <Title className="text-2xl mt-1 dark:text-white">{resolutionRate}%</Title>
+              <Text className="text-text-secondary dark:text-white/60">Taux de Résolution</Text>
+              <h4 className="text-2xl font-bold mt-1 text-text-primary dark:text-white">{resolutionRate}%</h4>
             </div>
             <TrendingUp className="text-emerald-500" size={20} />
           </Flex>
           <ProgressBar value={resolutionRate} color="emerald" className="mt-4" />
-          <Text className="mt-2 text-xs dark:text-white/40 text-center">Sans intervention humaine</Text>
-        </Card>
+          <Text className="mt-2 text-xs text-text-secondary dark:text-white/40 text-center">Sans intervention humaine</Text>
+        </PremiumGlassCard>
 
-        <Card decoration="top" decorationColor="violet">
+        <PremiumGlassCard className="p-6">
           <Flex alignItems="start">
             <div>
-              <Text className="dark:text-white/60">Économie Réalisée</Text>
-              <Title className="text-2xl mt-1 dark:text-white">{hoursSaved}h</Title>
+              <Text className="text-text-secondary dark:text-white/60">Économie Réalisée</Text>
+              <h4 className="text-2xl font-bold mt-1 text-text-primary dark:text-white">{hoursSaved}h</h4>
             </div>
             <Clock className="text-violet-500" size={20} />
           </Flex>
           <Flex className="mt-4">
-             <Text className="truncate dark:text-white/40 text-xs">Temps humain gagné</Text>
+             <Text className="truncate text-text-secondary dark:text-white/40 text-xs">Temps humain gagné</Text>
              <Badge color="violet">Premium</Badge>
           </Flex>
-        </Card>
+        </PremiumGlassCard>
 
-        <Card decoration="top" decorationColor="orange">
+        <PremiumGlassCard className="p-6">
           <Flex alignItems="start">
             <div>
-              <Text className="dark:text-white/60">Crédits Restants</Text>
-              <Title className="text-2xl mt-1 dark:text-white">{organization.credits}</Title>
+              <Text className="text-text-secondary dark:text-white/60">Crédits Restants</Text>
+              <h4 className="text-2xl font-bold mt-1 text-text-primary dark:text-white">{organization.credits}</h4>
             </div>
             <Coins className="text-orange-500" size={20} />
           </Flex>
           <Flex className="mt-4">
-             <Text className="truncate dark:text-white/40 text-xs">Capacité actuelle</Text>
+             <Text className="truncate text-text-secondary dark:text-white/40 text-xs">Capacité actuelle</Text>
              <Link href={`/${orgId}/billing`} className="text-xs text-orange-500 hover:underline">Recharger</Link>
           </Flex>
-        </Card>
+        </PremiumGlassCard>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Chart */}
-        <Card className="lg:col-span-2">
-          <Title className="dark:text-white">Volume de messages (7 derniers jours)</Title>
+        <PremiumGlassCard className="lg:col-span-2 p-6">
+          <h3 className="text-xl font-bold text-text-primary dark:text-white">Volume de messages (7 derniers jours)</h3>
           {totalMessages === 0 ? (
-            <div className="h-72 mt-4 flex items-center justify-center border-2 border-dashed border-gray-100 dark:border-white/5 rounded-xl bg-gray-50/50 dark:bg-white/5">
+            <div className="h-72 mt-4 flex items-center justify-center border-2 border-dashed border-black/5 dark:border-white/5 rounded-xl bg-black/5 dark:bg-white/5">
               <div className="text-center">
                 <MessageSquare className="mx-auto text-gray-300 dark:text-white/20 mb-2" size={32} />
-                <p className="text-gray-500 dark:text-white/40 text-sm">Pas encore de données</p>
+                <p className="text-text-secondary dark:text-white/40 text-sm">Pas encore de données</p>
               </div>
             </div>
           ) : (
@@ -216,19 +217,19 @@ export default async function DashboardPage({
               data={chartData}
             />
           )}
-        </Card>
+        </PremiumGlassCard>
 
         {/* Connection Status & Live Feed */}
         <div className="space-y-8">
-           <Card>
-              <Title className="dark:text-white mb-4">État des Connexions</Title>
+           <PremiumGlassCard className="p-6">
+              <h3 className="text-xl font-bold text-text-primary dark:text-white mb-4">État des Connexions</h3>
               <div className="space-y-4">
                  <Flex>
                     <div className="flex items-center gap-3">
                        <div className="p-2 bg-green-100 dark:bg-green-500/20 rounded-lg text-green-600 dark:text-green-400">
                           <MessageCircle size={18} />
                        </div>
-                       <Text className="dark:text-white font-medium">WhatsApp Business</Text>
+                       <Text className="text-text-primary dark:text-white font-medium">WhatsApp Business</Text>
                     </div>
                     <Badge color="green">Connecté ✅</Badge>
                  </Flex>
@@ -237,41 +238,41 @@ export default async function DashboardPage({
                        <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400">
                           <Mail size={18} />
                        </div>
-                       <Text className="dark:text-white font-medium">Email Automation</Text>
+                       <Text className="text-text-primary dark:text-white font-medium">Email Automation</Text>
                     </div>
                     <Badge color="green">Connecté ✅</Badge>
                  </Flex>
                  <Flex>
                     <div className="flex items-center gap-3">
-                       <div className="p-2 bg-gray-100 dark:bg-white/10 rounded-lg text-gray-400">
+                       <div className="p-2 bg-black/5 dark:bg-white/10 rounded-lg text-gray-400">
                           <Globe size={18} />
                        </div>
-                       <Text className="dark:text-white font-medium">Website Widget</Text>
+                       <Text className="text-text-primary dark:text-white font-medium">Website Widget</Text>
                     </div>
                     <Badge color="gray">En attente</Badge>
                  </Flex>
               </div>
-           </Card>
+           </PremiumGlassCard>
 
-           <Card>
-              <Title className="dark:text-white mb-4">Widget Daily Report</Title>
+           <PremiumGlassCard className="p-6">
+              <h3 className="text-xl font-bold text-text-primary dark:text-white mb-4">Widget Daily Report</h3>
               {lastReport ? (
                 <div className="space-y-4">
                    <div className="flex items-center gap-2">
                       <FileText size={16} className="text-blue-500" />
-                      <Text className="text-xs font-bold uppercase tracking-wider dark:text-white/40">Rapport de {lastReport.agent.name}</Text>
+                      <Text className="text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-white/40">Rapport de {lastReport.agent.name}</Text>
                    </div>
-                   <p className="text-sm text-gray-600 dark:text-white/70 italic line-clamp-4">
+                   <p className="text-sm text-text-secondary dark:text-white/70 italic line-clamp-4">
                       "{lastReport.summaryText}"
                    </p>
                    <Link href={`/${orgId}/analytics`} className="block text-center text-xs text-blue-500 hover:underline">Voir tous les rapports</Link>
                 </div>
               ) : (
                 <div className="py-4 text-center">
-                   <Text className="text-xs dark:text-white/40">Aucun rapport disponible pour le moment.</Text>
+                   <Text className="text-xs text-text-secondary dark:text-white/40">Aucun rapport disponible pour le moment.</Text>
                 </div>
               )}
-           </Card>
+           </PremiumGlassCard>
         </div>
       </div>
 
@@ -282,9 +283,9 @@ export default async function DashboardPage({
         </div>
 
         {/* Mini Live Log */}
-        <Card>
+        <PremiumGlassCard className="p-6">
            <div className="flex items-center justify-between mb-4">
-              <Title className="dark:text-white">Flux "Live"</Title>
+              <h3 className="text-xl font-bold text-text-primary dark:text-white">Flux "Live"</h3>
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
@@ -296,16 +297,16 @@ export default async function DashboardPage({
                 { action: "Message géré", user: "Marie Koné", agent: "SAV", time: "5 min" },
                 { action: "Document appris", user: "Guide_Tarif.pdf", agent: "System", time: "12 min" },
               ].map((log, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl text-xs transition-colors hover:bg-gray-100 dark:hover:bg-white/10">
+                <div key={i} className="flex items-start gap-3 p-3 bg-black/5 dark:bg-white/5 rounded-xl text-xs transition-colors hover:bg-black/10 dark:hover:bg-white/10">
                    <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-blue-500" />
                    <div className="flex-1">
-                      <p className="dark:text-white/80"><span className="font-bold">{log.agent}</span> : {log.action} pour <span className="font-medium">{log.user}</span></p>
-                      <p className="text-gray-400 dark:text-white/30 mt-1">{log.time}</p>
+                      <p className="text-text-primary dark:text-white/80"><span className="font-bold">{log.agent}</span> : {log.action} pour <span className="font-medium">{log.user}</span></p>
+                      <p className="text-text-secondary dark:text-white/30 mt-1">{log.time}</p>
                    </div>
                 </div>
               ))}
            </div>
-        </Card>
+        </PremiumGlassCard>
       </div>
     </div>
   );

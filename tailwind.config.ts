@@ -36,6 +36,8 @@ const config: Config = {
           purple: "#8B5CF6",
           success: "#10B981",
         },
+        "text-primary": "#121417",
+        "text-secondary": "#636C77",
         // tremor colors
         tremor: {
           brand: {
@@ -68,6 +70,8 @@ const config: Config = {
         },
       },
       boxShadow: {
+        // glass
+        "glass": "0 8px 32px 0 rgba(31,38,135,0.07)",
         // tremor
         "tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
         "tremor-card": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",

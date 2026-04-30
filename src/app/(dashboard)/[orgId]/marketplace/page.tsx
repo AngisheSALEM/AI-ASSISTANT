@@ -17,10 +17,10 @@ export default async function MarketplacePage({ params }: { params: { orgId: str
   return (
     <div className="p-10 max-w-7xl mx-auto">
       <header className="mb-12">
-        <h1 className="text-4xl font-bold font-fraunces tracking-tighter text-white mb-2">
+        <h1 className="text-4xl font-bold font-fraunces tracking-tighter text-text-primary dark:text-white mb-2">
           Marketplace des Employés IA
         </h1>
-        <p className="text-white/50 text-lg">
+        <p className="text-text-secondary dark:text-white/50 text-lg">
           Louez des agents spécialisés pour renforcer votre équipe en quelques secondes.
         </p>
       </header>

@@ -35,8 +35,10 @@ export function PremiumGlassCard({ children, className }: PremiumGlassCardProps)
       whileHover={{ y: -8 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className={cn(
-        "relative overflow-hidden rounded-2xl border bg-gradient-to-br from-white/[0.05] to-transparent backdrop-blur-xl transition-colors duration-300",
-        isHovered ? "border-white/30" : "border-white/10",
+        "relative overflow-hidden rounded-2xl transition-all duration-300",
+        "bg-white/40 backdrop-blur-md border border-white/20 shadow-glass",
+        "dark:bg-neutral-900/40 dark:border-white/10 dark:shadow-none dark:backdrop-blur-xl dark:bg-gradient-to-br dark:from-white/[0.05] dark:to-transparent",
+        isHovered ? "border-white/40 dark:border-white/30" : "border-white/20 dark:border-white/10",
         className
       )}
     >

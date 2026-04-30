@@ -6,6 +6,8 @@
   :root {
     --background: #ffffff;
     --foreground: #121417;
+    --text-primary: #121417;
+    --text-secondary: #636C77;
     --border: #E4E7EB;
 
     --tremor-background-muted: #f9fafb;
@@ -47,6 +49,16 @@ body {
 @layer base {
   h1, h2, h3, h4, h5, h6, .font-fraunces {
     font-variation-settings: "SOFT" 100;
+  }
+}
+
+@layer utilities {
+  .glass-light {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-glass;
+  }
+
+  .glass-dark {
+    @apply bg-neutral-900/40 backdrop-blur-md border border-white/10;
   }
 }
 
