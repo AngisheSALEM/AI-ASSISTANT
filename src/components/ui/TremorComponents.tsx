@@ -1,5 +1,37 @@
 "use client";
 
-import { AreaChart, DonutChart, Card, Title, Text, Badge, Flex, ProgressBar } from "@tremor/react";
+import {
+  AreaChart,
+  DonutChart,
+  Card,
+  Title,
+  Text,
+  Badge,
+  Flex,
+  ProgressBar,
+  Button,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+} from "@tremor/react";
 
-export { AreaChart, DonutChart, Card, Title, Text, Badge, Flex, ProgressBar };
+export {
+  AreaChart,
+  DonutChart,
+  Card,
+  Title,
+  Text,
+  Badge,
+  Flex,
+  ProgressBar,
+  Button,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+};
