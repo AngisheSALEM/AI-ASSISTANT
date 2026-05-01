@@ -67,8 +67,8 @@ export async function POST(
       .slice(1)
       .reverse()
       .map((msg) => {
-        if (msg.role === "USER") return new HumanMessage(msg.content);
-        return new AIMessage(msg.content);
+        if (msg.role === "USER") return new HumanMessage(msg.content || "");
+        return new AIMessage(msg.content || "");
       });
 
     // 5. Recherche RAG : Trouver le contexte pertinent

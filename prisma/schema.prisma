@@ -167,8 +167,8 @@ model Subscription {
 
 model Conversation {
   id        String    @id @default(cuid())
-  agentId   String
-  agent     Agent     @relation(fields: [agentId], references: [id])
+  agentId   String?
+  agent     Agent?    @relation(fields: [agentId], references: [id])
   messages  Message[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -176,17 +176,13 @@ model Conversation {
 
 model Message {
   id             String       @id @default(cuid())
-  content        String
-  role           MessageRole
+  role           String       // "user", "assistant", or "system"
+  content        String?      // Optional for UI messages
+  uiType         String?      // e.g., "AGENT_SELECTION", "WHATSAPP_INPUT", "INSIGHT_REPORT"
+  uiData         Json?        // Stores tool results or UI state
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   createdAt      DateTime     @default(now())
-}
-
-enum MessageRole {
-  USER
-  ASSISTANT
-  SYSTEM
 }
 
 model DailyReport {
