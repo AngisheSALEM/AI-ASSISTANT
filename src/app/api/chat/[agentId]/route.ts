@@ -3,8 +3,9 @@ import prisma from "@/lib/prisma";
 import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getModelForOrganization } from "@/lib/ai/model-router";
-import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
-import { StringOutputParser } from "@langchain/core/output_parsers";
+import { getAvailableTools } from "@/lib/integrations/toolRegistry";
+import { SystemMessage, HumanMessage, AIMessage, BaseMessage, ToolMessage } from "@langchain/core/messages";
+import { Runnable } from "@langchain/core/runnables";
 
 export async function POST(
   req: Request,
@@ -62,7 +63,7 @@ export async function POST(
     });
 
     // On inverse pour avoir l'ordre chronologique et on exclut le dernier (le message actuel est géré séparément dans HumanMessage)
-    const pastMessages = history
+    const pastMessages: BaseMessage[] = history
       .slice(1)
       .reverse()
       .map((msg) => {
@@ -76,7 +77,10 @@ export async function POST(
       .map((r) => `[Source: ${r.title}]\n${r.content}`)
       .join("\n\n");
 
-    // 6. Préparer le System Prompt augmenté
+    // 6. Récupérer les outils dynamiques basés sur les intégrations actives
+    const tools = await getAvailableTools(agent.organizationId);
+
+    // 7. Préparer le System Prompt augmenté
     const augmentedSystemPrompt = `
       ${agent.systemPrompt}
 
@@ -86,16 +90,21 @@ export async function POST(
       INSTRUCTIONS:
       Réponds à l'utilisateur en utilisant le contexte ci-dessus si pertinent.
       Si tu ne connais pas la réponse, dis-le poliment.
+      ${tools.length > 0 ? "Tu as accès à des outils pour effectuer des actions. Utilise-les si nécessaire." : ""}
     `;
 
-    // 7. Streamer la réponse
-    const parser = new StringOutputParser();
+    // 8. Préparer le modèle avec les outils
+    let modelWithTools: Runnable = model;
+    if (tools.length > 0) {
+        // @ts-ignore - bindTools is available on ChatOpenAI and ChatGroq
+        modelWithTools = model.bindTools(tools);
+    }
 
-    const stream = await model.pipe(parser).stream([
-      new SystemMessage(augmentedSystemPrompt),
-      ...pastMessages,
-      new HumanMessage(message),
-    ]);
+    const messages: BaseMessage[] = [
+        new SystemMessage(augmentedSystemPrompt),
+        ...pastMessages,
+        new HumanMessage(message),
+    ];
 
     // Conversion du stream pour qu'il soit compatible avec le format Response
     const encoder = new TextEncoder();
@@ -103,40 +112,71 @@ export async function POST(
 
     const readableStream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of stream) {
-          fullResponse += chunk;
-          controller.enqueue(encoder.encode(chunk));
-        }
-
-        controller.close();
-
-        // 8. Enregistrer la réponse de l'IA une fois le stream terminé
-        // On le fait après controller.close() pour ne pas bloquer la fin du stream pour l'utilisateur.
-        // NOTE: Dans certains environnements Edge (Vercel), il est recommandé d'utiliser
-        // une Promise qui est attendue si on veut être 100% sûr, mais ici on suit
-        // l'architecture demandée pour ne pas ralentir l'affichage.
-        const saveMessage = async () => {
-          try {
-            await prisma.message.create({
-              data: {
-                content: fullResponse,
-                role: "ASSISTANT",
-                conversationId: currentConversationId,
-              },
-            });
-          } catch (dbError) {
-            console.error("Error saving assistant message:", dbError);
-          }
-        };
-
-        // Exécution "en arrière-plan"
-        await saveMessage();
-
-        // Deduct credits after successful message processing
         try {
-          await deductCredits(agent.organizationId, cost);
-        } catch (creditError) {
-          console.error("Error deducting credits:", creditError);
+            // Première invocation du modèle
+            let result = await modelWithTools.invoke(messages);
+
+            // Boucle de gestion des appels d'outils (limité à 5 itérations pour éviter les boucles infinies)
+            let iterations = 0;
+            while (result.tool_calls && result.tool_calls.length > 0 && iterations < 5) {
+                iterations++;
+                messages.push(result);
+
+                for (const toolCall of result.tool_calls) {
+                    const tool = tools.find((t) => t.name === toolCall.name);
+                    if (tool) {
+                        const toolResult = await tool.invoke(toolCall.args);
+                        messages.push(new ToolMessage({
+                            tool_call_id: toolCall.id!,
+                            content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult),
+                        }));
+                    } else {
+                        messages.push(new ToolMessage({
+                            tool_call_id: toolCall.id!,
+                            content: `Tool ${toolCall.name} not found.`,
+                        }));
+                    }
+                }
+                // Ré-invocation du modèle après l'exécution des outils
+                result = await modelWithTools.invoke(messages);
+            }
+
+            // Une fois que l'IA a fini d'appeler des outils, on streame sa réponse finale
+            // Pour simplifier ici car on a déjà fait l'invoke final, on streame le contenu de 'result'
+            // Dans une vraie implémentation de streaming bout-en-bout avec outils,
+            // on utiliserait des outils comme LangGraph ou on gérerait le stream manuellement de façon plus complexe.
+            const content = result.content as string;
+            fullResponse = content;
+            controller.enqueue(encoder.encode(content));
+
+            controller.close();
+
+            // 9. Enregistrer la réponse de l'IA
+            const saveMessage = async () => {
+              try {
+                await prisma.message.create({
+                  data: {
+                    content: fullResponse,
+                    role: "ASSISTANT",
+                    conversationId: currentConversationId,
+                  },
+                });
+              } catch (dbError) {
+                console.error("Error saving assistant message:", dbError);
+              }
+            };
+
+            await saveMessage();
+
+            // Deduct credits after successful message processing
+            try {
+              await deductCredits(agent.organizationId, cost);
+            } catch (creditError) {
+              console.error("Error deducting credits:", creditError);
+            }
+        } catch (streamError) {
+            console.error("Stream error:", streamError);
+            controller.error(streamError);
         }
       },
     });
