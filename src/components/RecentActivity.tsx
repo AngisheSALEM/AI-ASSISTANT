@@ -58,8 +58,8 @@ export default async function RecentActivity({ orgId }: { orgId: string }) {
             conversations.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Text className="font-medium">{item.agent.name}</Text>
-                  <Text className="text-xs text-gray-500">{item.agent.role}</Text>
+                  <Text className="font-medium">{item.agent?.name || "Assistant Copilot"}</Text>
+                  <Text className="text-xs text-gray-500">{item.agent?.role || "Général"}</Text>
                 </TableCell>
                 <TableCell>
                   <Text className="truncate max-w-xs">
