@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     onFinish: async ({ text, toolCalls, toolResults }) => {
       try {
         // Mapping tool results to uiType and uiData for persistence
-        const uiToolResult = toolResults.find(r =>
+        const uiToolResult = toolResults?.find(r =>
           ['request_agent_selection', 'request_whatsapp_credentials', 'show_insight_report'].includes(r.toolName)
         );
 

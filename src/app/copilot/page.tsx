@@ -60,12 +60,16 @@ export default function CopilotPage() {
         fetch(`/api/chat/history?conversationId=${savedId}`)
           .then(res => res.json())
           .then(data => {
-            if (data.messages) {
-              setMessages(data.messages);
-            }
-          })
-          .catch(err => console.error("Failed to load history", err))
-          .finally(() => setIsInitialLoad(false));
+          if (data && data.messages) {
+            setMessages(data.messages);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to load history", err);
+        })
+        .finally(() => {
+          setIsInitialLoad(false);
+        });
       } else {
         setIsInitialLoad(false);
       }
@@ -96,7 +100,10 @@ export default function CopilotPage() {
     const resultData = ('result' in toolInvocation ? toolInvocation.result : null) || message.uiData;
 
     if (toolName === 'request_agent_selection' || toolName === 'AGENT_SELECTION') {
-      const selectedType = messages.find((m, i) => i > messages.indexOf(message) && m.role === 'user')?.content;
+      const msgIndex = messages.indexOf(message);
+      const selectedType = msgIndex !== -1
+        ? messages.find((m, i) => i > msgIndex && m.role === 'user')?.content
+        : undefined;
 
       return (
         <div key={toolCallId} className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl my-4">
