@@ -31,7 +31,7 @@ export default function LoginPage() {
         setError("Identifiants incorrects");
         setLoading(false);
       } else {
-        router.push("/onboarding");
+        router.push("/copilot");
       }
     } catch (err) {
       setError("Une erreur est survenue");
@@ -113,7 +113,7 @@ export default function LoginPage() {
           </div>
 
           <button
-            onClick={() => signIn("google", { callbackUrl: "/onboarding" })}
+            onClick={() => signIn("google", { callbackUrl: "/copilot" })}
             className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-3"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">

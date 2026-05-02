@@ -19,7 +19,7 @@ export default function OnboardingPage() {
     if (status === "unauthenticated") {
       router.push("/login");
     } else if (session?.user && (session.user as any).organizationId) {
-      router.push(`/${(session.user as any).organizationId}`);
+      router.push("/copilot");
     }
   }, [session, status, router]);
 
@@ -47,7 +47,7 @@ export default function OnboardingPage() {
           },
         });
 
-        router.push(`/${data.organizationId}`);
+        router.push("/copilot");
       } else {
         setError(data.error || "Une erreur est survenue");
         setLoading(false);
@@ -120,7 +120,7 @@ export default function OnboardingPage() {
               >
                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (
                   <>
-                    Accéder au dashboard
+                    Accéder à Opere Copilot
                     <Rocket className="h-5 w-5" />
                   </>
                 )}
