@@ -2,12 +2,27 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 
+const sanitizeConnectionString = (url: string) => {
+  try {
+    const parsedUrl = new URL(url)
+    const sslMode = parsedUrl.searchParams.get('sslmode')
+    if (sslMode === 'require' || sslMode === 'prefer' || sslMode === 'verify-ca') {
+      parsedUrl.searchParams.set('sslmode', 'verify-full')
+    }
+    return parsedUrl.toString()
+  } catch (e) {
+    // If URL parsing fails, fall back to the original string
+    return url
+  }
+}
+
 const prismaClientSingleton = () => {
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
     throw new Error('DATABASE_URL is not defined')
   }
-  const pool = new pg.Pool({ connectionString })
+  const sanitizedConnectionString = sanitizeConnectionString(connectionString)
+  const pool = new pg.Pool({ connectionString: sanitizedConnectionString })
   const adapter = new PrismaPg(pool)
   return new PrismaClient({ adapter })
 }
