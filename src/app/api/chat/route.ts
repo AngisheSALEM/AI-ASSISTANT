@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     // Normalize messages to ensure roles are lowercase and content is handled safely
     const messages = rawMessages.map((m: { role?: string; content?: string | null }) => ({
       ...m,
-      role: m.role?.toLowerCase(),
+      role: (m.role?.toLowerCase() ?? 'user') as 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool',
       content: m.content ?? '',
     }));
 
