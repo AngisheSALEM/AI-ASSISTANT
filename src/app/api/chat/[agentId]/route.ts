@@ -14,7 +14,7 @@ export async function POST(
   try {
     const { agentId } = params;
     const body = await req.json();
-    const { message, conversationId } = body;
+    const { message, conversationId: requestedConversationId } = body;
 
     if (!message) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -37,8 +37,17 @@ export async function POST(
       return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
     }
 
-    // 2. Gérer la conversation
-    let currentConversationId = conversationId;
+    // 2. Gérer la conversation - Ensure existence
+    let currentConversationId = requestedConversationId;
+    if (currentConversationId) {
+      const existingConversation = await prisma.conversation.findUnique({
+        where: { id: currentConversationId }
+      });
+      if (!existingConversation) {
+        currentConversationId = null;
+      }
+    }
+
     if (!currentConversationId) {
       const newConversation = await prisma.conversation.create({
         data: { agentId },
@@ -142,9 +151,6 @@ export async function POST(
             }
 
             // Une fois que l'IA a fini d'appeler des outils, on streame sa réponse finale
-            // Pour simplifier ici car on a déjà fait l'invoke final, on streame le contenu de 'result'
-            // Dans une vraie implémentation de streaming bout-en-bout avec outils,
-            // on utiliserait des outils comme LangGraph ou on gérerait le stream manuellement de façon plus complexe.
             const content = result.content as string;
             fullResponse = content;
             controller.enqueue(encoder.encode(content));
@@ -189,7 +195,7 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error("Chat error:", error);
+    console.error("Chat agent error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

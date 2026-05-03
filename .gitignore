@@ -9,5 +9,6 @@ build/
 .env.production.local
 .DS_Store
 *.log
+*.tsbuildinfo
 
 /src/generated/prisma
