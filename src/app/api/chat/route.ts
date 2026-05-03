@@ -46,14 +46,21 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { messages, conversationId: requestedConversationId } = body;
+    const { messages: rawMessages, conversationId: requestedConversationId } = body;
 
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    if (!rawMessages || !Array.isArray(rawMessages) || rawMessages.length === 0) {
       return new Response(JSON.stringify({ error: 'Messages are required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Normalize messages to ensure roles are lowercase and content is handled safely
+    const messages = rawMessages.map((m: { role?: string; content?: string | null }) => ({
+      ...m,
+      role: m.role?.toLowerCase(),
+      content: m.content ?? '',
+    }));
 
     const lastMessage = messages[messages.length - 1];
 

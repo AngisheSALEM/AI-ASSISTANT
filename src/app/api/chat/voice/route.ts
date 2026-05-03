@@ -62,8 +62,8 @@ export async function POST(req: Request) {
 
     await prisma.message.createMany({
       data: [
-        { content: transcription, role: "USER", conversationId: currentConversationId },
-        { content: responseText, role: "ASSISTANT", conversationId: currentConversationId },
+        { content: transcription, role: "user", conversationId: currentConversationId },
+        { content: responseText, role: "assistant", conversationId: currentConversationId },
       ],
     });
 
