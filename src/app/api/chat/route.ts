@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { Plan } from "@prisma/client";
 
-export const maxDuration = 30;
+export const maxDuration = 60; // Increased for AI inference + cold starts
 
 interface SessionUser {
   id: string;
@@ -19,9 +19,16 @@ interface SessionUser {
 
 export async function POST(req: Request) {
   try {
-    // Check for API Keys early
+    // Check for API Keys early - FAIL FAST instead of proceeding
     if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
       console.error("Missing AI API Keys (OPENAI_API_KEY or GROQ_API_KEY)");
+      return new Response(JSON.stringify({
+        error: 'Service Unavailable',
+        details: 'AI service is not configured. Please set OPENAI_API_KEY or GROQ_API_KEY.'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const session = await getServerSession(authOptions);

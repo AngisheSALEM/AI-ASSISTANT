@@ -9,6 +9,9 @@ export interface AgentConfig {
 }
 
 export function getAgentModel(temperature: number = 0.7) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is required for agent model");
+  }
   return new ChatOpenAI({
     modelName: "gpt-4o",
     temperature,
