@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { deductCredits } from "@/lib/auth/check-credits";
 import { revalidatePath } from "next/cache";
 

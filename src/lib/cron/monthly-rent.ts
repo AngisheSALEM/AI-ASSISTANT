@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 
 /**
  * Script à exécuter mensuellement pour déduire le coût de location des agents.

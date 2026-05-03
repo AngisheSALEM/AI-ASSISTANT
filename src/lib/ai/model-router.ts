@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGroq } from "@langchain/groq";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { Plan } from "@prisma/client";
 
 export const CREDIT_COSTS = {

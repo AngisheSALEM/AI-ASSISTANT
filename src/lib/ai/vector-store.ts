@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { generateEmbedding } from "./embeddings";
 import { Prisma } from "@prisma/client";
 

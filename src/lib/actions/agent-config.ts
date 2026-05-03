@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { revalidatePath } from "next/cache";
 
 export async function addKnowledge(organizationId: string, title: string, content: string) {

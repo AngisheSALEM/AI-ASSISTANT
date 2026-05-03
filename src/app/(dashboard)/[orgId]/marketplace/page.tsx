@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { TemplateList } from "@/components/marketplace/TemplateList";
 
 export default async function MarketplacePage({ params }: { params: { orgId: string } }) {

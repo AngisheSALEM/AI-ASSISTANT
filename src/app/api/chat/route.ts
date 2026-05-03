@@ -4,7 +4,7 @@ import { streamText, tool, convertToCoreMessages } from 'ai';
 import { z } from 'zod';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { Plan } from "@prisma/client";
 
 export const maxDuration = 30;

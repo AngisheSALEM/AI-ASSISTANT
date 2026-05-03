@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { AgentsTable } from "@/components/agents/AgentsTable";
 import { AgentsHeader } from "@/components/agents/AgentsHeader";
 

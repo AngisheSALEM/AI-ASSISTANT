@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 
 /**
  * Vérifie si une organisation a suffisamment de crédits.

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { transcribeAudio, synthesizeSpeech } from "@/lib/ai/voice-engine";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getModelForOrganization, CREDIT_COSTS } from "@/lib/ai/model-router";
