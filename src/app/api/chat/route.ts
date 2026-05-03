@@ -55,14 +55,16 @@ export async function POST(req: Request) {
       });
     }
 
-    // Normalize messages to ensure roles are lowercase and content is handled safely
-    const messages = rawMessages.map((m: { role?: string; content?: string | null }) => ({
+    // Ensure messages are properly formatted for the AI SDK
+    // We normalize the role to lowercase to avoid issues with some providers
+    // and then use convertToCoreMessages to handle the rest.
+    const normalizedMessages = rawMessages.map((m: any) => ({
       ...m,
       role: (m.role?.toLowerCase() ?? 'user') as 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool',
-      content: m.content ?? '',
     }));
 
-    const lastMessage = messages[messages.length - 1];
+    // For database persistence, we want a simple format
+    const lastRawMessage = normalizedMessages[normalizedMessages.length - 1];
 
     // 1. Ensure conversation exists and is valid
     let conversationId = requestedConversationId;
@@ -85,11 +87,11 @@ export async function POST(req: Request) {
     }
 
     // 2. Save User Message
-    if (lastMessage && lastMessage.role === 'user') {
+    if (lastRawMessage && lastRawMessage.role === 'user') {
       await prisma.message.create({
         data: {
           role: 'user',
-          content: lastMessage.content,
+          content: typeof lastRawMessage.content === 'string' ? lastRawMessage.content : JSON.stringify(lastRawMessage.content),
           conversationId,
         }
       });
@@ -102,7 +104,7 @@ export async function POST(req: Request) {
 
     const result = await streamText({
       model: model as any,
-      messages: convertToCoreMessages(messages),
+      messages: convertToCoreMessages(normalizedMessages),
       system: `Tu es "Opere Copilot", un assistant intelligent pour les entreprises.
       Ton rôle est d'aider l'utilisateur à configurer et gérer ses agents IA.
 
