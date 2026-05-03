@@ -59,7 +59,7 @@ export async function POST(
     await prisma.message.create({
       data: {
         content: message,
-        role: "USER",
+        role: "user",
         conversationId: currentConversationId,
       },
     });
@@ -76,7 +76,7 @@ export async function POST(
       .slice(1)
       .reverse()
       .map((msg) => {
-        if (msg.role === "USER") return new HumanMessage(msg.content || "");
+        if (msg.role?.toLowerCase() === "user") return new HumanMessage(msg.content || "");
         return new AIMessage(msg.content || "");
       });
 
@@ -163,7 +163,7 @@ export async function POST(
                 await prisma.message.create({
                   data: {
                     content: fullResponse,
-                    role: "ASSISTANT",
+                    role: "assistant",
                     conversationId: currentConversationId,
                   },
                 });
