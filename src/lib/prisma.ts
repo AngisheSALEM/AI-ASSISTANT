@@ -4,7 +4,22 @@ import pg from 'pg'
 
 const connectionString = process.env.DATABASE_URL
 
-const pool = new pg.Pool({ connectionString })
+// Sanitize connection string to replace deprecated SSL modes
+let sanitizedConnectionString = connectionString
+if (connectionString && connectionString.startsWith('postgres')) {
+  try {
+    const url = new URL(connectionString)
+    const sslmode = url.searchParams.get('sslmode')
+    if (sslmode === 'prefer' || sslmode === 'require' || sslmode === 'verify-ca') {
+      url.searchParams.set('sslmode', 'verify-full')
+      sanitizedConnectionString = url.toString()
+    }
+  } catch (e) {
+    console.error('Error sanitizing DATABASE_URL:', e)
+  }
+}
+
+const pool = new pg.Pool({ connectionString: sanitizedConnectionString })
 const adapter = new PrismaPg(pool)
 
 // L'erreur venait souvent d'un manque de mise à jour du moteur Prisma 
