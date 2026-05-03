@@ -150,7 +150,7 @@ export async function POST(req: Request) {
               content: text || null,
               conversationId,
               uiType: uiToolResult ? (uiToolResult.result as { ui: string }).ui : null,
-              uiData: uiToolResult ? (uiToolResult.result as any) : undefined,
+              uiData: uiToolResult ? (uiToolResult.result as any) : null,
             }
           });
         } catch (error) {
@@ -161,7 +161,7 @@ export async function POST(req: Request) {
 
     return result.toDataStreamResponse({
       headers: {
-        'x-conversation-id': conversationId,
+        'x-conversation-id': String(conversationId),
       }
     });
   } catch (error: any) {
