@@ -1,6 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { groq } from '@ai-sdk/groq';
-import { streamText, tool, type CoreMessage } from 'ai';
+import { streamText, tool, convertToCoreMessages } from 'ai';
 import { z } from 'zod';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -19,6 +19,11 @@ interface SessionUser {
 
 export async function POST(req: Request) {
   try {
+    // Check for API Keys early
+    if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
+      console.error("Missing AI API Keys (OPENAI_API_KEY or GROQ_API_KEY)");
+    }
+
     const session = await getServerSession(authOptions);
     const user = session?.user as SessionUser | undefined;
 
@@ -40,7 +45,16 @@ export async function POST(req: Request) {
       }
     }
 
-    const { messages, conversationId: requestedConversationId } = await req.json();
+    const body = await req.json();
+    const { messages, conversationId: requestedConversationId } = body;
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'Messages are required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const lastMessage = messages[messages.length - 1];
 
     // 1. Ensure conversation exists and is valid
@@ -81,7 +95,7 @@ export async function POST(req: Request) {
 
     const result = await streamText({
       model: model as any,
-      messages: messages as CoreMessage[],
+      messages: convertToCoreMessages(messages),
       system: `Tu es "Opere Copilot", un assistant intelligent pour les entreprises.
       Ton rôle est d'aider l'utilisateur à configurer et gérer ses agents IA.
 
@@ -150,9 +164,17 @@ export async function POST(req: Request) {
         'x-conversation-id': conversationId,
       }
     });
-  } catch (error) {
-    console.error('Chat Copilot Error:', error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+  } catch (error: any) {
+    console.error('Chat Copilot Error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause
+    });
+    return new Response(JSON.stringify({
+      error: 'Internal Server Error',
+      details: error.message
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
