@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // Notez les accolades {}
+import { prisma } from "@/lib/prisma";
+
+// Fail fast if no AI API keys are configured
+if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
+  console.error("Warning: Missing AI API Keys at module load");
+}
 import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getModelForOrganization } from "@/lib/ai/model-router";
@@ -7,12 +12,15 @@ import { getAvailableTools } from "@/lib/integrations/toolRegistry";
 import { SystemMessage, HumanMessage, AIMessage, BaseMessage, ToolMessage } from "@langchain/core/messages";
 import { Runnable } from "@langchain/core/runnables";
 
+export const maxDuration = 60; // Allow time for AI inference + cold starts
+
 export async function POST(
   req: Request,
-  { params }: { params: { agentId: string } }
+  { params }: { params: Promise<{ agentId: string }> }
 ) {
   try {
-    const { agentId } = params;
+    // In Next.js 14+, params must be awaited
+    const { agentId } = await params;
     const body = await req.json();
     const { message, conversationId: requestedConversationId } = body;
 
