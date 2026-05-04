@@ -1,0 +1,42 @@
+# RÔLE : Senior Full-Stack AI Engineer (Expert Next.js, Prisma & AI Orchestration)
+
+# CONTEXTE
+Nous développons un module de "Bibliothèque de Templates d'Agents" pour une plateforme SaaS moderne. L'objectif est de permettre aux utilisateurs de choisir un modèle d'agent prédéfini (Support, SEO, Juridique, etc.) et de l'instancier en tant qu'agent personnel dans leur compte. L'architecture repose sur Next.js 14+ (App Router), Prisma pour l'ORM, Tailwind CSS pour le styling, et une base de données PostgreSQL avec pgvector pour les futures capacités RAG.
+
+# TÂCHE
+Implémenter le système complet de gestion des templates, incluant :
+1. La mise à jour du schéma Prisma (`AgentTemplate` et `Agent`).
+2. La création d'une page frontend d'onboarding (`/onboarding/templates`) affichant une grille de templates filtrables.
+3. Le développement de la logique d'instanciation (API Route) pour cloner un template vers un agent utilisateur.
+
+# DÉTAILS TECHNIQUES & STRUCTURE
+## 1. Schéma de Données (Prisma)
+- Implémenter les modèles `AgentTemplate` (le modèle source) et `Agent` (l'instance utilisateur) comme décrit dans la spécification technique.
+- Assurer une relation optionnelle entre `Agent` et `AgentTemplate` pour garder une trace de l'origine.
+
+## 2. Interface Utilisateur (Frontend)
+- Utiliser **Lucide React** pour les icônes et **Shadcn UI** pour les composants (Cards, Buttons, Badges).
+- Créer une grille responsive présentant les métiers cibles :
+    * Support Client (RAG focus)
+    * Rédacteur SEO (HTML analysis focus)
+    * Analyseur de Données (CSV focus)
+    * Expert Juridique (Compliance focus)
+    * Assistant SDR (Web search/Email focus)
+- Ajouter un état de chargement (Skeleton) lors de l'instanciation de l'agent.
+
+## 3. Logique API (Backend)
+- Créer l'endpoint `POST /api/agents/create-from-template`.
+- Gérer la copie sécurisée du `systemPrompt` et des `uiData` du template vers l'agent.
+- Implémenter une gestion d'erreur robuste (ex: template introuvable, erreur de base de données).
+
+# CONTRAINTES & RÈGLES
+- **Clean Code** : Séparer la logique métier (services/actions) des composants UI.
+- **Sécurité** : Vérifier que `userId` est présent et valide avant toute création.
+- **Performance** : Utiliser `useOptimistic` ou des états de transition pour une UI fluide lors de la création.
+- **Vibe Coding Focus** : Le code doit être modulaire, facile à étendre pour ajouter de nouveaux métiers à l'avenir via un simple fichier de configuration ou un seed.
+
+# FORMAT DE SORTIE
+1. Code du schéma Prisma mis à jour.
+2. Code de la route API Next.js (TypeScript).
+3. Code du composant de page React (Page Client) avec la gestion d'état pour le filtrage et l'instanciation.
+4. Un exemple de fichier `seed.ts` pour peupler les premiers templates.

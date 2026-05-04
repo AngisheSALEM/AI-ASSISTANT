@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Opere - AI Agents Platform"
+version = "1.0.0"
+id = "artifacts/opere"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24420
+
+[services.development]
+run = "pnpm --filter @workspace/opere run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/opere", "run", "build" ]
+publicDir = "artifacts/opere/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24420"
+BASE_PATH = "/"
