@@ -68,6 +68,7 @@ export async function POST(req: Request) {
     const normalizedMessages = rawMessages.map((m: any) => ({
       ...m,
       role: (m.role?.toLowerCase() ?? 'user') as 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool',
+      content: m.content ?? "", // Handle null content safely
     }));
 
     // For database persistence, we want a simple format
@@ -175,18 +176,13 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toDataStreamResponse({
+    return result.toAIStreamResponse({
       headers: {
         'x-conversation-id': String(conversationId),
       }
     });
   } catch (error: any) {
-    console.error('Chat Copilot Error:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      cause: error.cause
-    });
+    console.error('Chat Copilot Error:', error);
     return new Response(JSON.stringify({
       error: 'Internal Server Error',
       details: error.message

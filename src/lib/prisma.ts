@@ -21,9 +21,29 @@ if (connectionString && connectionString.startsWith('postgres')) {
   }
 }
 
-const pool = new pg.Pool({ connectionString: sanitizedConnectionString })
-const adapter = new PrismaPg(pool)
+// Global variable for singleton pattern
+const globalForPrisma = global as unknown as {
+  prisma: PrismaClient | undefined
+  pool: pg.Pool | undefined
+}
 
-// L'erreur venait souvent d'un manque de mise à jour du moteur Prisma 
-// qui ne reconnaissait pas l'objet adapter correctement
-export const prisma = new PrismaClient({ adapter })
+// Ensure the pool is also a singleton in development/serverless
+if (!globalForPrisma.pool) {
+  globalForPrisma.pool = new pg.Pool({
+    connectionString: sanitizedConnectionString,
+    max: 10, // Max number of clients in the pool
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  })
+}
+
+const adapter = new PrismaPg(globalForPrisma.pool)
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
