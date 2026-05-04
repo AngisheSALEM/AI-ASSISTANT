@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     }
 
     const orgId = user.organizationId;
+    console.log('Initializing plan variable with Plan.FREE');
     let plan: Plan = Plan.FREE;
     if (orgId) {
       console.log('Fetching organization plan for orgId:', orgId);
@@ -58,9 +59,10 @@ export async function POST(req: Request) {
         where: { id: orgId },
         select: { plan: true },
       });
+      console.log('Organization query result:', org);
       if (org) {
         plan = org.plan;
-        console.log('Organization plan found:', plan);
+        console.log('Organization plan updated to:', plan);
       } else {
         console.log('Organization not found for orgId:', orgId);
       }
@@ -125,6 +127,7 @@ export async function POST(req: Request) {
 
     console.log('Starting streamText with model:', process.env.GROQ_API_KEY ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini');
 
+    console.log('Calling streamText...');
     const result = await streamText({
       model: model as any,
       messages: convertToCoreMessages(normalizedMessages),
@@ -144,6 +147,7 @@ export async function POST(req: Request) {
             message: z.string().optional().describe('Un message optionnel à afficher au-dessus de la sélection.'),
           }),
           execute: async ({ message }) => {
+            console.log('Executing tool: request_agent_selection', { message });
             return { status: 'success', ui: 'AGENT_SELECTION', message };
           },
         }),
@@ -153,6 +157,7 @@ export async function POST(req: Request) {
             message: z.string().optional().describe('Un message optionnel à afficher au-dessus du formulaire.'),
           }),
           execute: async ({ message }) => {
+            console.log('Executing tool: request_whatsapp_credentials', { message });
             return { status: 'success', ui: 'WHATSAPP_INPUT', message };
           },
         }),
@@ -165,12 +170,16 @@ export async function POST(req: Request) {
             date: z.string(),
           }),
           execute: async (data) => {
+            console.log('Executing tool: show_insight_report', data);
             return { status: 'success', ui: 'INSIGHT_REPORT', ...data };
           },
         }),
       },
       onFinish: async ({ text, toolResults }) => {
-        console.log('streamText finished');
+        console.log('streamText onFinish triggered', {
+          textLength: text?.length,
+          toolResultsCount: toolResults?.length
+        });
         try {
           const uiToolResult = toolResults?.find(r =>
             ['request_agent_selection', 'request_whatsapp_credentials', 'show_insight_report'].includes(r.toolName)

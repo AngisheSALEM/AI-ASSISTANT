@@ -7,12 +7,14 @@ import { DynamicStructuredTool } from "@langchain/core/tools";
  * Elle retourne un tableau d'outils compatibles avec LangChain (utilisé par le projet).
  */
 export async function getAvailableTools(organizationId: string): Promise<DynamicStructuredTool[]> {
+  console.log('--- getAvailableTools Started ---', { organizationId });
   const activeIntegrations = await prisma.integration.findMany({
     where: {
       organizationId,
       isActive: true,
     },
   });
+  console.log('Active integrations count:', activeIntegrations.length);
 
   const tools: DynamicStructuredTool[] = [];
 
@@ -71,5 +73,6 @@ export async function getAvailableTools(organizationId: string): Promise<Dynamic
     }
   }
 
+  console.log('Final tools count:', tools.length);
   return tools;
 }
