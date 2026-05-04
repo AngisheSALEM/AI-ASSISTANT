@@ -107,7 +107,7 @@ export async function POST(req: Request) {
     // Model selection based on plan
     const model = plan === Plan.PREMIUM
       ? openai('gpt-4o')
-      : groq('llama3-70b-8192');
+      : groq('llama-3.3-70b-versatile');
 
     const result = await streamText({
       model: model as any,
