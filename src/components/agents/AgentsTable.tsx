@@ -61,12 +61,6 @@ export function AgentsTable({ agents }: AgentsTableProps) {
           ))}
         </TableBody>
       </Table>
-
-      {agents.length === 0 && (
-        <div className="py-10 text-center">
-          <p className="text-text-secondary dark:text-white/40">Vous n'avez pas encore d'agents. Visitez la marketplace pour en recruter un !</p>
-        </div>
-      )}
     </PremiumGlassCard>
   );
 }
