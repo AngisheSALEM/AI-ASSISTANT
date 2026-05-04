@@ -38,7 +38,7 @@ export async function getModelForOrganization(organizationId: string, temperatur
   if (process.env.GROQ_API_KEY) {
     return {
       model: new ChatGroq({
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile",
         temperature,
         apiKey: process.env.GROQ_API_KEY,
         streaming: true,

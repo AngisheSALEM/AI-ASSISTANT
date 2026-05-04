@@ -13,6 +13,8 @@ if (connectionString && connectionString.startsWith('postgres')) {
     if (sslmode === 'prefer' || sslmode === 'require' || sslmode === 'verify-ca') {
       url.searchParams.set('sslmode', 'verify-full')
       sanitizedConnectionString = url.toString()
+      // Overwrite the env variable to ensure all dependencies use the sanitized version
+      process.env.DATABASE_URL = sanitizedConnectionString
     }
   } catch (e) {
     console.error('Error sanitizing DATABASE_URL:', e)
