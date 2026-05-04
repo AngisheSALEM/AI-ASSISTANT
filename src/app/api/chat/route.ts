@@ -78,7 +78,6 @@ export async function POST(req: Request) {
 
     console.log('Normalizing messages...');
     const normalizedMessages = rawMessages.map((m: any) => ({
-      ...m,
       role: (m.role?.toLowerCase() ?? 'user') as 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool',
       content: m.content ?? "",
     }));
