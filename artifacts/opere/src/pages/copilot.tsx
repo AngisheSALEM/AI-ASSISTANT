@@ -1,9 +1,9 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Zap, Settings, Send, Headphones, TrendingUp, MessageSquare, Bot, Stethoscope, Building2, User
-} from "lucide-react";
+import { Zap, Settings, Send, Bot, MessageSquare } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { api } from "@/lib/api";
 
 const STEPS = [
   { id: "choice", label: "Choix Agent" },
@@ -39,43 +39,52 @@ function ConversationProgress({ currentStep }: { currentStep: number }) {
 }
 
 export default function CopilotPage() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | undefined>();
+  const [apiError, setApiError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: input };
+    const currentInput = input;
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
-    setTimeout(() => {
+    setApiError("");
+
+    try {
+      const allMessages = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
+      const data = await api.chat.copilot(allMessages, conversationId);
+      if (data.conversationId) setConversationId(data.conversationId);
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Bien sûr ! Je vais vous aider à configurer votre agent IA. Pour commencer, quel type d'agent souhaitez-vous déployer ? Support client, secrétaire médical, ou commercial immobilier ?"
+        content: data.text || "Je n'ai pas pu générer une réponse.",
       };
       setMessages(prev => [...prev, aiMsg]);
+    } catch (err: any) {
+      setApiError(err.message);
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Je suis désolé, une erreur est survenue. Veuillez réessayer.",
+      }]);
+    } finally {
       setIsLoading(false);
-    }, 1200);
+    }
   };
 
-  const getCurrentStep = () => {
-    if (messages.length > 6) return 3;
-    if (messages.length > 4) return 2;
-    if (messages.length > 2) return 1;
-    return 0;
-  };
+  const orgId = user?.organizationId;
 
   return (
     <div className="flex flex-col h-screen bg-[#050505] text-white">
@@ -87,17 +96,19 @@ export default function CopilotPage() {
             </div>
             <h1 className="font-bold tracking-tight">Opere Copilot</h1>
           </div>
-          <Link href="/demo-org">
-            <button className="relative group flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all text-sm font-medium overflow-hidden">
-              <Settings className="h-4 w-4 relative z-10" />
-              <span className="relative z-10">Ouvrir le Centre de Contrôle</span>
-            </button>
-          </Link>
+          {orgId && (
+            <Link href={`/${orgId}`}>
+              <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all text-sm font-medium">
+                <Settings className="h-4 w-4" />
+                <span>Centre de Contrôle</span>
+              </button>
+            </Link>
+          )}
         </div>
-        <ConversationProgress currentStep={getCurrentStep()} />
+        <ConversationProgress currentStep={Math.min(Math.floor(messages.length / 2), 3)} />
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-8 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
@@ -108,6 +119,11 @@ export default function CopilotPage() {
               <p className="text-white/40 max-w-md">
                 Je peux vous aider à configurer vos agents, analyser vos performances ou connecter vos outils.
               </p>
+              {apiError && (
+                <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-orange-400 text-sm max-w-md">
+                  {apiError}
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 w-full max-w-lg">
                 {[
                   "Configurer un agent Support Client",

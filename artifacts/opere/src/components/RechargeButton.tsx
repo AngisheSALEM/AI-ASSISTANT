@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
 
-export default function RechargeButton({ orgId, currentCredits }: { orgId: string, currentCredits: number }) {
+export default function RechargeButton({ orgId, onSuccess }: { orgId: string; onSuccess?: () => void }) {
   const [loading, setLoading] = useState(false);
 
   const handleRecharge = async () => {
     setLoading(true);
-    setTimeout(() => {
-      alert("Paiement simulé réussi ! 100 crédits ajoutés.");
+    try {
+      await api.org.recharge(orgId, 100);
+      onSuccess?.();
+    } catch (err: any) {
+      alert(err.message || "Erreur lors du rechargement");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (

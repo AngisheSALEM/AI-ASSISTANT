@@ -1,16 +1,11 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
-  Users, MessageSquare, Activity, Plus, Coins, AlertTriangle, Zap, TrendingUp, Clock,
-  Globe, Mail, MessageCircle, FileText
+  MessageSquare, TrendingUp, Clock, Coins, AlertTriangle, Plus, Globe, Mail, MessageCircle, FileText
 } from "lucide-react";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
-import RechargeButton from "@/components/RechargeButton";
-
-const mockOrg = { name: "Kinshasa Tech Solutions", credits: 85, plan: "STANDARD" };
-const mockAgentCount = 3;
-const mockTotalMessages = 247;
-const mockResolutionRate = 88;
-const mockHoursSaved = 37;
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
 
 const chartData = [
   { date: "27 avr", Messages: 12 },
@@ -29,7 +24,40 @@ const liveLog = [
 ];
 
 export default function DashboardPage({ orgId }: { orgId: string }) {
-  const showAlert = mockOrg.credits < 20;
+  const { user } = useAuth();
+  const [orgData, setOrgData] = useState<{ name: string; credits: number; plan: string } | null>(null);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [org, agentList] = await Promise.all([
+          api.org.get(orgId),
+          api.agents.list(orgId),
+        ]);
+        setOrgData(org);
+        setAgents(agentList);
+      } catch {
+        setOrgData({ name: "Votre Organisation", credits: 85, plan: "STANDARD" });
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (orgId) fetchData();
+  }, [orgId]);
+
+  const handleRecharge = async () => {
+    try {
+      await api.org.recharge(orgId, 100);
+      const updated = await api.org.get(orgId);
+      setOrgData(updated);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const showAlert = orgData && orgData.credits < 20;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
@@ -37,7 +65,7 @@ export default function DashboardPage({ orgId }: { orgId: string }) {
         <div className="bg-orange-50 dark:bg-orange-500/10 border-l-4 border-orange-400 p-4 rounded-md flex items-center space-x-3">
           <AlertTriangle className="text-orange-400" size={20} />
           <p className="text-sm text-orange-700 dark:text-orange-300">
-            Alerte : Vos crédits sont faibles ({mockOrg.credits}). Pensez à recharger pour éviter toute interruption de service.
+            Alerte : Vos crédits sont faibles ({orgData?.credits}). Pensez à recharger.
           </p>
         </div>
       )}
@@ -45,21 +73,27 @@ export default function DashboardPage({ orgId }: { orgId: string }) {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[--text-primary] dark:text-white font-fraunces">Tableau de bord</h1>
-          <p className="text-[--text-secondary] dark:text-white/50 mt-1">
-            Organisation : <span className="font-medium text-[--text-primary] dark:text-white">{mockOrg.name}</span>
-          </p>
+          {orgData && (
+            <p className="text-[--text-secondary] dark:text-white/50 mt-1">
+              Organisation : <span className="font-medium text-[--text-primary] dark:text-white">{orgData.name}</span>
+            </p>
+          )}
         </div>
-        <div className="flex items-center gap-3">
-          <RechargeButton orgId={orgId} currentCredits={mockOrg.credits} />
-        </div>
+        <button
+          onClick={handleRecharge}
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          <Plus size={16} />
+          <span>Recharger 100 crédits</span>
+        </button>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Total Interactions", value: mockTotalMessages, sub: "Messages gérés par l'IA", badge: "+12%", badgeColor: "blue", icon: MessageSquare, iconColor: "text-blue-500" },
-          { label: "Taux de Résolution", value: `${mockResolutionRate}%`, sub: "Sans intervention humaine", icon: TrendingUp, iconColor: "text-emerald-500", progress: mockResolutionRate },
-          { label: "Économie Réalisée", value: `${mockHoursSaved}h`, sub: "Temps humain gagné", badge: "Premium", badgeColor: "violet", icon: Clock, iconColor: "text-violet-500" },
-          { label: "Crédits Restants", value: mockOrg.credits, sub: "Capacité actuelle", icon: Coins, iconColor: "text-orange-500", link: `/${orgId}/billing` },
+          { label: "Total Interactions", value: loading ? "..." : "247", sub: "Messages gérés par l'IA", badge: "+12%", badgeColor: "blue", icon: MessageSquare, iconColor: "text-blue-500" },
+          { label: "Taux de Résolution", value: "88%", sub: "Sans intervention humaine", icon: TrendingUp, iconColor: "text-emerald-500", progress: 88 },
+          { label: "Économie Réalisée", value: "37h", sub: "Temps humain gagné", badge: "Premium", badgeColor: "violet", icon: Clock, iconColor: "text-violet-500" },
+          { label: "Crédits Restants", value: loading ? "..." : String(orgData?.credits ?? 0), sub: "Capacité actuelle", icon: Coins, iconColor: "text-orange-500", link: `/${orgId}/billing` },
         ].map((stat, i) => (
           <PremiumGlassCard key={i} className="p-6">
             <div className="flex items-start justify-between">
@@ -123,7 +157,7 @@ export default function DashboardPage({ orgId }: { orgId: string }) {
               ].map((c, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 bg-${c.color === "green" ? "green" : "black"}/10 dark:bg-${c.color === "green" ? "green" : "white"}/10 rounded-lg text-${c.color === "green" ? "green" : "gray"}-500`}>
+                    <div className={`p-2 rounded-lg ${c.color === "green" ? "bg-green-100 dark:bg-green-500/20 text-green-600" : "bg-gray-100 dark:bg-white/10 text-gray-500"}`}>
                       <c.icon size={18} />
                     </div>
                     <p className="text-sm font-medium text-[--text-primary] dark:text-white">{c.label}</p>
@@ -137,10 +171,23 @@ export default function DashboardPage({ orgId }: { orgId: string }) {
           </PremiumGlassCard>
 
           <PremiumGlassCard className="p-6">
-            <h3 className="text-xl font-bold text-[--text-primary] dark:text-white mb-4">Widget Daily Report</h3>
-            <div className="py-4 text-center">
-              <p className="text-xs text-[--text-secondary] dark:text-white/40">Aucun rapport disponible pour le moment.</p>
-            </div>
+            <h3 className="text-xl font-bold text-[--text-primary] dark:text-white mb-4">Agents actifs</h3>
+            {loading ? (
+              <p className="text-sm text-[--text-secondary] dark:text-white/40">Chargement...</p>
+            ) : agents.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-xs text-[--text-secondary] dark:text-white/40">Aucun agent. <Link href={`/${orgId}/marketplace`} className="text-blue-500 hover:underline">Recruter →</Link></p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {agents.slice(0, 3).map((a: any) => (
+                  <div key={a.id} className="flex items-center justify-between p-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                    <span className="text-sm font-medium text-[--text-primary] dark:text-white">{a.name}</span>
+                    <span className="text-xs px-1.5 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full font-bold">{a.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </PremiumGlassCard>
         </div>
       </div>
@@ -169,7 +216,7 @@ export default function DashboardPage({ orgId }: { orgId: string }) {
 
         <PremiumGlassCard className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-[--text-primary] dark:text-white">Flux "Live"</h3>
+            <h3 className="text-xl font-bold text-[--text-primary] dark:text-white">Flux Live</h3>
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
@@ -177,8 +224,8 @@ export default function DashboardPage({ orgId }: { orgId: string }) {
           </div>
           <div className="space-y-4">
             {liveLog.map((log, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-black/5 dark:bg-white/5 rounded-xl text-xs transition-colors hover:bg-black/10 dark:hover:bg-white/10">
-                <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-blue-500" />
+              <div key={i} className="flex items-start gap-3 p-3 bg-black/5 dark:bg-white/5 rounded-xl text-xs">
+                <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-blue-500 shrink-0" />
                 <div className="flex-1">
                   <p className="text-[--text-primary] dark:text-white/80"><span className="font-bold">{log.agent}</span> : {log.action} pour <span className="font-medium">{log.user}</span></p>
                   <p className="text-[--text-secondary] dark:text-white/30 mt-1">{log.time}</p>

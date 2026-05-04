@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Building2, Loader2, Rocket } from "lucide-react";
+import { Building2, Loader2, Rocket, Zap } from "lucide-react";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 import { FloatingChatbot } from "@/components/FloatingChatbot";
+import { useAuth } from "@/lib/AuthContext";
+import { api, setToken, setUser } from "@/lib/api";
 
 export default function OnboardingPage() {
   const [, navigate] = useLocation();
+  const { user, updateUser } = useAuth();
   const [orgName, setOrgName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -15,9 +18,20 @@ export default function OnboardingPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setTimeout(() => {
+    try {
+      const data = await api.org.create(orgName);
+      if (data.token) {
+        setToken(data.token);
+        const updatedUser = { ...user, organizationId: data.organizationId };
+        setUser(updatedUser);
+        updateUser(updatedUser as any);
+      }
       navigate("/copilot");
-    }, 1500);
+    } catch (err: any) {
+      setError(err.message || "Une erreur est survenue");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,6 +41,13 @@ export default function OnboardingPage() {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-xl"
       >
+        <Link href="/" className="flex items-center justify-center mb-8 group">
+          <div className="p-2 bg-white/10 rounded-xl group-hover:rotate-12 transition-transform">
+            <Zap className="h-6 w-6 text-white" />
+          </div>
+          <span className="ml-3 text-2xl font-bold font-fraunces tracking-tighter text-white">Opere</span>
+        </Link>
+
         <PremiumGlassCard className="p-12 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-12 opacity-10">
             <Rocket className="h-32 w-32 text-white" />
@@ -41,13 +62,13 @@ export default function OnboardingPage() {
                 Parlez-nous de <br /> votre entreprise
               </h1>
               <p className="text-white/50 text-lg">
-                Nous avons besoin de ces informations pour configurer votre espace de travail et vos futurs agents IA.
+                Nous allons créer votre espace de travail et vos agents IA personnalisés.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
               {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm">{error}</div>
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">{error}</div>
               )}
 
               <div className="space-y-3">
@@ -67,7 +88,7 @@ export default function OnboardingPage() {
 
               <button
                 type="submit"
-                disabled={loading || !orgName}
+                disabled={loading || !orgName.trim()}
                 className="w-full py-5 bg-white text-black rounded-2xl font-bold text-lg hover:bg-cyan-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(0,0,0,0.3)] disabled:opacity-50 disabled:hover:scale-100"
               >
                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (

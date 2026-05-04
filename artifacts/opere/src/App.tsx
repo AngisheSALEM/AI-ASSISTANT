@@ -1,5 +1,6 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { ThemeProvider } from "next-themes";
+import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/login";
@@ -27,6 +28,26 @@ function DeepSpaceBg() {
   );
 }
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const [, navigate] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    navigate("/login");
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <>
@@ -35,69 +56,91 @@ function Router() {
         <Route path="/" component={LandingPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
-        <Route path="/onboarding" component={OnboardingPage} />
-        <Route path="/copilot" component={CopilotPage} />
+        <Route path="/onboarding">
+          <ProtectedRoute><OnboardingPage /></ProtectedRoute>
+        </Route>
+        <Route path="/copilot">
+          <ProtectedRoute><CopilotPage /></ProtectedRoute>
+        </Route>
         <Route path="/:orgId/agents">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <AgentsPage orgId={params.orgId} />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <AgentsPage orgId={params.orgId} />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route path="/:orgId/knowledge">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <KnowledgePage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <KnowledgePage />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route path="/:orgId/analytics">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <AnalyticsPage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <AnalyticsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route path="/:orgId/marketplace">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <MarketplacePage orgId={params.orgId} />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <MarketplacePage orgId={params.orgId} />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route path="/:orgId/settings">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <SettingsPage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <SettingsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route path="/:orgId/integrations">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <IntegrationsPage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <IntegrationsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route path="/:orgId/billing">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <BillingPage orgId={params.orgId} />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <BillingPage orgId={params.orgId} />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route path="/:orgId/thinking">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <ThinkingPage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <ThinkingPage />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route path="/:orgId">
           {(params) => (
-            <DashboardLayout orgId={params.orgId}>
-              <DashboardPage orgId={params.orgId} />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout orgId={params.orgId}>
+                <DashboardPage orgId={params.orgId} />
+              </DashboardLayout>
+            </ProtectedRoute>
           )}
         </Route>
         <Route component={NotFound} />
@@ -109,9 +152,11 @@ function Router() {
 function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-        <Router />
-      </WouterRouter>
+      <AuthProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Router />
+        </WouterRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

@@ -1,32 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { PlusCircle, Settings, BookOpen, User, Headphones, Stethoscope, Building2, TrendingUp, Cpu } from "lucide-react";
+import { PlusCircle, Settings, BookOpen, User, Headphones, Stethoscope, Building2, TrendingUp, Cpu, Loader2 } from "lucide-react";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 import { Link } from "wouter";
+import { api } from "@/lib/api";
 
 const ICON_MAP: Record<string, any> = { Headphones, Stethoscope, Building2, TrendingUp, User };
 
-const mockAgents = [
-  { id: "1", name: "Support Alpha", role: "Support Client", status: "ACTIVE", createdAt: new Date("2024-04-01") },
-  { id: "2", name: "Commercial Beta", role: "Commercial Immobilier", status: "ACTIVE", createdAt: new Date("2024-04-15") },
-];
-
-const mockTemplates = [
-  { id: "t1", name: "Support Client", description: "Agent spécialisé dans la réponse aux questions fréquentes et la résolution des problèmes clients.", category: "Support", pricePerMonth: 50, icon: "Headphones" },
-  { id: "t2", name: "Secrétaire Médical", description: "Gère les rendez-vous et répond aux questions administratives des patients.", category: "Santé", pricePerMonth: 70, icon: "Stethoscope" },
-  { id: "t3", name: "Commercial Immobilier", description: "Qualifie vos prospects et présente votre catalogue de biens 24h/24.", category: "Immobilier", pricePerMonth: 100, icon: "Building2" },
-];
-
-function AgentsTable({ agents }: { agents: typeof mockAgents }) {
+function AgentsTable({ agents }: { agents: any[] }) {
   return (
     <PremiumGlassCard className="p-4">
       <table className="w-full">
         <thead>
           <tr className="border-b border-black/5 dark:border-white/5">
             <th className="text-left text-xs font-bold uppercase tracking-widest text-[--text-secondary] dark:text-white/40 py-3 px-4">Nom</th>
-            <th className="text-left text-xs font-bold uppercase tracking-widest text-[--text-secondary] dark:text-white/40 py-3 px-4">Rôle / Métier</th>
+            <th className="text-left text-xs font-bold uppercase tracking-widest text-[--text-secondary] dark:text-white/40 py-3 px-4">Rôle</th>
             <th className="text-left text-xs font-bold uppercase tracking-widest text-[--text-secondary] dark:text-white/40 py-3 px-4">Statut</th>
-            <th className="text-left text-xs font-bold uppercase tracking-widest text-[--text-secondary] dark:text-white/40 py-3 px-4">Date de recrutement</th>
+            <th className="text-left text-xs font-bold uppercase tracking-widest text-[--text-secondary] dark:text-white/40 py-3 px-4">Créé</th>
             <th className="text-right text-xs font-bold uppercase tracking-widest text-[--text-secondary] dark:text-white/40 py-3 px-4">Actions</th>
           </tr>
         </thead>
@@ -57,17 +47,27 @@ function AgentsTable({ agents }: { agents: typeof mockAgents }) {
   );
 }
 
-function TemplatesGrid({ templates, orgId }: { templates: typeof mockTemplates; orgId: string }) {
+function TemplatesGrid({ templates, orgId, onAgentCreated }: { templates: any[]; orgId: string; onAgentCreated: () => void }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [errorId, setErrorId] = useState<string | null>(null);
 
-  const handleSelect = (templateId: string) => {
+  const handleSelect = async (templateId: string) => {
     setLoadingId(templateId);
-    setTimeout(() => setLoadingId(null), 1500);
+    setErrorId(null);
+    try {
+      await api.agents.createFromTemplate(templateId, orgId);
+      onAgentCreated();
+    } catch (err: any) {
+      setErrorId(templateId);
+      alert(err.message || "Erreur lors de la création");
+    } finally {
+      setLoadingId(null);
+    }
   };
 
   return (
     <motion.div
-      variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
+      variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } }}
       initial="hidden"
       animate="show"
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
@@ -104,9 +104,10 @@ function TemplatesGrid({ templates, orgId }: { templates: typeof mockTemplates; 
                 <button
                   onClick={() => handleSelect(template.id)}
                   disabled={!!loadingId}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-colors"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-colors flex items-center gap-2"
                 >
-                  {isLoading ? "..." : "Sélectionner"}
+                  {isLoading && <Loader2 size={14} className="animate-spin" />}
+                  {isLoading ? "Création..." : "Sélectionner"}
                 </button>
               </div>
             </PremiumGlassCard>
@@ -118,14 +119,49 @@ function TemplatesGrid({ templates, orgId }: { templates: typeof mockTemplates; 
 }
 
 export default function AgentsPage({ orgId }: { orgId: string }) {
-  const hasAgents = mockAgents.length > 0;
+  const [agents, setAgents] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAgents = async () => {
+    try {
+      const data = await api.agents.list(orgId);
+      setAgents(data);
+    } catch {}
+  };
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const [agentList, templateList] = await Promise.all([
+          api.agents.list(orgId),
+          api.agents.templates(),
+        ]);
+        setAgents(agentList);
+        setTemplates(templateList);
+      } catch {
+        setTemplates([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (orgId) fetchAll();
+  }, [orgId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-blue-500" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[--text-primary] dark:text-white font-fraunces">Mes Agents IA</h1>
-          <p className="text-[--text-secondary] dark:text-white/50 mt-1">{mockAgents.length} agent(s) actif(s) dans votre organisation</p>
+          <p className="text-[--text-secondary] dark:text-white/50 mt-1">{agents.length} agent(s) actif(s) dans votre organisation</p>
         </div>
         <Link href={`/${orgId}/marketplace`}>
           <motion.button
@@ -138,23 +174,20 @@ export default function AgentsPage({ orgId }: { orgId: string }) {
         </Link>
       </div>
 
-      {hasAgents ? (
-        <div className="space-y-8">
-          <AgentsTable agents={mockAgents} />
-          <div>
-            <h2 className="text-xl font-bold text-[--text-primary] dark:text-white font-fraunces mb-6">Ajouter un nouvel agent</h2>
-            <TemplatesGrid templates={mockTemplates} orgId={orgId} />
-          </div>
+      <div className="space-y-10">
+        {agents.length > 0 && <AgentsTable agents={agents} />}
+        <div>
+          <h2 className="text-xl font-bold text-[--text-primary] dark:text-white font-fraunces mb-6">
+            {agents.length === 0 ? "Choisir votre premier agent" : "Ajouter un nouvel agent"}
+          </h2>
+          {agents.length === 0 && (
+            <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-2xl mb-6">
+              <p className="text-[--text-secondary] dark:text-white/60">Bienvenue ! Sélectionnez un template pour recruter votre premier agent IA.</p>
+            </div>
+          )}
+          <TemplatesGrid templates={templates} orgId={orgId} onAgentCreated={fetchAgents} />
         </div>
-      ) : (
-        <div className="space-y-8">
-          <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-2xl">
-            <h2 className="text-xl font-bold text-[--text-primary] dark:text-white mb-2">Bienvenue ! 👋</h2>
-            <p className="text-[--text-secondary] dark:text-white/60">Pour commencer, veuillez sélectionner un template pour votre premier agent IA.</p>
-          </div>
-          <TemplatesGrid templates={mockTemplates} orgId={orgId} />
-        </div>
-      )}
+      </div>
     </div>
   );
 }
