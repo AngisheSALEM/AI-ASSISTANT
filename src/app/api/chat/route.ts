@@ -18,6 +18,7 @@ interface SessionUser {
 }
 
 export async function POST(req: Request) {
+  console.log('--- Chat API POST Request Started ---');
   try {
     // Check for API Keys early - FAIL FAST instead of proceeding
     if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
@@ -31,8 +32,10 @@ export async function POST(req: Request) {
       });
     }
 
+    console.log('Fetching session...');
     const session = await getServerSession(authOptions);
     const user = session?.user as SessionUser | undefined;
+    console.log('Session user:', user ? { id: user.id, orgId: user.organizationId } : 'No user');
 
     if (!user) {
       return new Response('Unauthorized', { status: 401 });
@@ -43,17 +46,26 @@ export async function POST(req: Request) {
     // Get organization plan for model selection if orgId exists
     let plan: Plan = Plan.FREE;
     if (orgId) {
+      console.log('Fetching organization plan for orgId:', orgId);
       const org = await prisma.organization.findUnique({
         where: { id: orgId },
         select: { plan: true },
       });
       if (org) {
         plan = org.plan;
+        console.log('Organization plan found:', plan);
+      } else {
+        console.log('Organization not found for orgId:', orgId);
       }
     }
 
+    console.log('Parsing request body...');
     const body = await req.json();
     const { messages: rawMessages, conversationId: requestedConversationId } = body;
+    console.log('Request parameters:', {
+      messageCount: rawMessages?.length,
+      requestedConversationId
+    });
 
     if (!rawMessages || !Array.isArray(rawMessages) || rawMessages.length === 0) {
       return new Response(JSON.stringify({ error: 'Messages are required' }), {
@@ -62,6 +74,7 @@ export async function POST(req: Request) {
       });
     }
 
+    console.log('Normalizing messages...');
     // Ensure messages are properly formatted for the AI SDK
     // We normalize the role to lowercase to avoid issues with some providers
     // and then use convertToCoreMessages to handle the rest.
@@ -70,6 +83,7 @@ export async function POST(req: Request) {
       role: (m.role?.toLowerCase() ?? 'user') as 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool',
       content: m.content ?? "", // Handle null content safely
     }));
+    console.log('Normalized messages count:', normalizedMessages.length);
 
     // For database persistence, we want a simple format
     const lastRawMessage = normalizedMessages[normalizedMessages.length - 1];
@@ -77,25 +91,32 @@ export async function POST(req: Request) {
     // 1. Ensure conversation exists and is valid
     let conversationId = requestedConversationId;
     if (conversationId) {
+      console.log('Checking existing conversation:', conversationId);
       const existingConversation = await prisma.conversation.findUnique({
         where: { id: conversationId }
       });
       if (!existingConversation) {
+        console.log('Conversation not found, will create new one');
         conversationId = null;
+      } else {
+        console.log('Existing conversation found');
       }
     }
 
     if (!conversationId) {
+      console.log('Creating new conversation...');
       const newConversation = await prisma.conversation.create({
         data: {
           // Copilot conversations are not tied to a specific agent initially
         }
       });
       conversationId = newConversation.id;
+      console.log('New conversation created:', conversationId);
     }
 
     // 2. Save User Message
     if (lastRawMessage && lastRawMessage.role === 'user') {
+      console.log('Saving user message to DB...');
       await prisma.message.create({
         data: {
           role: 'user',
@@ -103,6 +124,7 @@ export async function POST(req: Request) {
           conversationId,
         }
       });
+      console.log('User message saved');
     }
 
     // Model selection based on plan
@@ -110,6 +132,7 @@ export async function POST(req: Request) {
       ? openai('gpt-4o')
       : groq('llama-3.3-70b-versatile');
 
+    console.log('Starting streamText with model:', plan === Plan.PREMIUM ? 'gpt-4o' : 'llama-3.3-70b-versatile');
     const result = await streamText({
       model: model as any,
       messages: convertToCoreMessages(normalizedMessages),
@@ -155,12 +178,14 @@ export async function POST(req: Request) {
         }),
       },
       onFinish: async ({ text, toolCalls, toolResults }) => {
+        console.log('streamText finished');
         try {
           // Mapping tool results to uiType and uiData for persistence
           const uiToolResult = toolResults?.find(r =>
             ['request_agent_selection', 'request_whatsapp_credentials', 'show_insight_report'].includes(r.toolName)
           );
 
+          console.log('Saving assistant message to DB...');
           await prisma.message.create({
             data: {
               role: 'assistant',
@@ -170,6 +195,7 @@ export async function POST(req: Request) {
               uiData: uiToolResult ? (uiToolResult.result as any) : null,
             }
           });
+          console.log('Assistant message saved');
         } catch (error) {
           console.error('Failed to save assistant message:', error);
         }
@@ -179,13 +205,20 @@ export async function POST(req: Request) {
     return result.toAIStreamResponse({
       headers: {
         'x-conversation-id': String(conversationId),
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       }
     });
   } catch (error: any) {
-    console.error('Chat Copilot Error:', error);
+    console.error('--- Chat Copilot Error ---');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+
+    // Return more descriptive error for debugging
     return new Response(JSON.stringify({
       error: 'Internal Server Error',
-      details: error.message
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
