@@ -1,3 +1,4 @@
+import { useEffect, type ReactNode } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
@@ -28,11 +29,11 @@ function DeepSpaceBg() {
   );
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading && !user) {
       navigate("/login");
     }
