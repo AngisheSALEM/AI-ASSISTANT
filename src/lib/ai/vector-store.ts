@@ -17,9 +17,11 @@ export async function similaritySearch(
   organizationId: string,
   limit: number = 3
 ): Promise<SearchResult[]> {
+  console.log('--- similaritySearch Started ---', { organizationId, limit });
   const queryEmbedding = await generateEmbedding(query);
   const vectorString = `[${queryEmbedding.join(",")}]`;
 
+  console.log('Embedding generated, performing vector search...');
   // Utilisation de $queryRaw avec template literals pour une sécurité maximale (Injection SQL)
   // On utilise Prisma.sql pour caster le vecteur correctement
   const results = await prisma.$queryRaw<SearchResult[]>`
@@ -33,5 +35,6 @@ export async function similaritySearch(
     LIMIT ${limit};
   `;
 
+  console.log('Vector search results count:', results.length);
   return results;
 }
