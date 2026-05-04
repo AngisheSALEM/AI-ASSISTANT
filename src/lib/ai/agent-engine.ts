@@ -1,4 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
+import { ChatGroq } from "@langchain/groq";
 
 export interface AgentConfig {
   name: string;
@@ -9,14 +10,25 @@ export interface AgentConfig {
 }
 
 export function getAgentModel(temperature: number = 0.7) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is required for agent model");
+  // Use Groq Llama if possible as requested
+  if (process.env.GROQ_API_KEY) {
+    return new ChatGroq({
+      model: "llama-3.3-70b-versatile",
+      temperature,
+      apiKey: process.env.GROQ_API_KEY,
+      streaming: true,
+    });
   }
-  return new ChatOpenAI({
-    modelName: "gpt-4o",
-    temperature,
-    streaming: true,
-  });
+
+  if (process.env.OPENAI_API_KEY) {
+    return new ChatOpenAI({
+      modelName: "gpt-4o",
+      temperature,
+      streaming: true,
+    });
+  }
+
+  throw new Error("No AI API key configured (GROQ_API_KEY or OPENAI_API_KEY)");
 }
 
 /**

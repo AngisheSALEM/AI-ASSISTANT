@@ -10,32 +10,23 @@ export const CREDIT_COSTS = {
 };
 
 export async function getModelForOrganization(organizationId: string, temperature: number = 0.7) {
+  console.log(`[model-router] Fetching model for org: ${organizationId}`);
+
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
-    select: { plan: true },
+    select: { id: true, plan: true },
   });
 
   if (!org) {
+    console.error(`[model-router] Organization not found: ${organizationId}`);
     throw new Error("Organization not found");
   }
 
-  if (org.plan === Plan.PREMIUM) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is required for premium plan");
-    }
-    return {
-      model: new ChatOpenAI({
-        modelName: "gpt-4o",
-        temperature,
-        streaming: true,
-      }),
-      cost: CREDIT_COSTS.OPENAI_TEXT,
-      plan: org.plan,
-    };
-  }
+  console.log(`[model-router] Org plan: ${org.plan}`);
 
-  // Plan FREE or STANDARD - prefer Groq, fallback to OpenAI
+  // User requested Llama (Groq) for debugging/cost reasons
   if (process.env.GROQ_API_KEY) {
+    console.log(`[model-router] Using Groq Llama for org ${organizationId}`);
     return {
       model: new ChatGroq({
         model: "llama-3.3-70b-versatile",
@@ -50,9 +41,10 @@ export async function getModelForOrganization(organizationId: string, temperatur
 
   // Fallback to OpenAI if Groq is not configured
   if (process.env.OPENAI_API_KEY) {
+    console.warn(`[model-router] GROQ_API_KEY missing, falling back to OpenAI for org ${organizationId}`);
     return {
       model: new ChatOpenAI({
-        modelName: "gpt-4o-mini",
+        modelName: org.plan === Plan.PREMIUM ? "gpt-4o" : "gpt-4o-mini",
         temperature,
         streaming: true,
       }),
@@ -61,5 +53,6 @@ export async function getModelForOrganization(organizationId: string, temperatur
     };
   }
 
+  console.error(`[model-router] No AI API key configured`);
   throw new Error("No AI API key configured. Set GROQ_API_KEY or OPENAI_API_KEY.");
 }
