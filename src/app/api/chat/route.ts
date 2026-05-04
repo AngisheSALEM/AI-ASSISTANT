@@ -147,7 +147,20 @@ export async function POST(req: Request) {
           }),
           execute: async ({ message }) => {
             console.log('Executing tool: request_agent_selection', { message });
-            return { status: 'success', ui: 'AGENT_SELECTION', message };
+            const templates = await prisma.agentTemplate.findMany();
+            return {
+              status: 'success',
+              ui: 'AGENT_SELECTION',
+              message,
+              templates: templates.map(t => ({
+                id: t.id,
+                name: t.name,
+                description: t.description,
+                category: t.category,
+                pricePerMonth: t.pricePerMonth,
+                icon: t.icon
+              }))
+            };
           },
         }),
         request_whatsapp_credentials: tool({
