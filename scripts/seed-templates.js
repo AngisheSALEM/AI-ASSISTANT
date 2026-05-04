@@ -31,11 +31,12 @@ async function main() {
   ];
 
   for (const t of templates) {
+    const id = t.name.toLowerCase().replace(/ /g, '-');
     await prisma.agentTemplate.upsert({
-      where: { id: t.name.toLowerCase().replace(/ /g, '-') },
+      where: { id: id },
       update: t,
       create: {
-        id: t.name.toLowerCase().replace(/ /g, '-'),
+        id: id,
         ...t
       }
     });

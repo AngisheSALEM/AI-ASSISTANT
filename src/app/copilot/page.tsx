@@ -11,8 +11,19 @@ import {
   Headphones,
   TrendingUp,
   MessageSquare,
-  Bot
+  Bot,
+  Stethoscope,
+  Building2,
+  User
 } from "lucide-react";
+
+const ICON_MAP: Record<string, any> = {
+  Headphones,
+  TrendingUp,
+  Stethoscope,
+  Building2,
+  User
+};
 import { useRef, useEffect, useState } from "react";
 import { AgentSelectionCard } from "@/components/copilot/ui/AgentSelectionCard";
 import { WhatsAppSetupInput } from "@/components/copilot/ui/WhatsAppSetupInput";
@@ -105,6 +116,29 @@ export default function CopilotPage() {
         ? messages.find((m, i) => i > msgIndex && m.role === 'user')?.content
         : undefined;
 
+      const templates = resultData?.templates || [];
+
+      if (templates.length > 0) {
+        return (
+          <div key={toolCallId} className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl my-4">
+            {templates.map((t: any) => {
+              const Icon = (t.icon && ICON_MAP[t.icon]) ? ICON_MAP[t.icon] : ICON_MAP.User;
+              return (
+                <AgentSelectionCard
+                  key={t.id}
+                  title={t.name}
+                  description={t.description}
+                  icon={Icon}
+                  selected={selectedType?.toLowerCase().includes(t.name.toLowerCase())}
+                  onSelect={() => append({ role: 'user', content: `Je choisis l'agent ${t.name}` })}
+                />
+              );
+            })}
+          </div>
+        );
+      }
+
+      // Fallback if no templates in result
       return (
         <div key={toolCallId} className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl my-4">
           <AgentSelectionCard
