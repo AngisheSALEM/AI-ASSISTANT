@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { agentsTable, agentTemplatesTable } from "@workspace/db";
+import { agentsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { requireAuth, type JwtPayload } from "../lib/auth.js";
+import { requireAuth, requireOrgAdmin, type JwtPayload } from "../lib/auth.js";
 import { z } from "zod";
 
 const TEMPLATES = [
@@ -74,8 +74,15 @@ router.get("/templates", async (req, res) => {
 });
 
 router.get("/agents/:orgId", requireAuth, async (req, res) => {
+  const user = (req as any).user as JwtPayload;
   try {
     const { orgId } = req.params;
+
+    if (user.organizationId !== orgId) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
+
     const agents = await db.select().from(agentsTable).where(eq(agentsTable.organizationId, orgId));
     res.json(agents);
   } catch (err) {
@@ -84,14 +91,19 @@ router.get("/agents/:orgId", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/agents/create-from-template", requireAuth, async (req, res) => {
-  const userPayload = (req as any).user as JwtPayload;
+router.post("/agents/create-from-template", requireOrgAdmin, async (req, res) => {
+  const user = (req as any).user as JwtPayload;
   try {
     const { templateId, agentName, organizationId } = z.object({
       templateId: z.string(),
       agentName: z.string().optional(),
       organizationId: z.string(),
     }).parse(req.body);
+
+    if (user.organizationId !== organizationId) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
 
     const template = TEMPLATES.find(t => t.id === templateId);
     if (!template) {
@@ -119,9 +131,23 @@ router.post("/agents/create-from-template", requireAuth, async (req, res) => {
   }
 });
 
-router.delete("/agents/:agentId", requireAuth, async (req, res) => {
+router.delete("/agents/:agentId", requireOrgAdmin, async (req, res) => {
+  const user = (req as any).user as JwtPayload;
   try {
     const { agentId } = req.params;
+    const [agent] = await db.select({ organizationId: agentsTable.organizationId })
+      .from(agentsTable).where(eq(agentsTable.id, agentId)).limit(1);
+
+    if (!agent) {
+      res.status(404).json({ error: "Agent not found" });
+      return;
+    }
+
+    if (user.organizationId !== agent.organizationId) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
+
     await db.delete(agentsTable).where(eq(agentsTable.id, agentId));
     res.json({ success: true });
   } catch (err) {

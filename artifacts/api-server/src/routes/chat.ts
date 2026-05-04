@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { conversationsTable, messagesTable, agentsTable, organizationsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { requireAuth, type JwtPayload } from "../lib/auth.js";
 import { z } from "zod";
 
@@ -66,7 +66,10 @@ router.post("/chat", requireAuth, async (req, res) => {
 
     let conversationId = reqConvId;
     if (conversationId) {
-      const existing = await db.select({ id: conversationsTable.id }).from(conversationsTable).where(eq(conversationsTable.id, conversationId)).limit(1);
+      const existing = await db.select({ id: conversationsTable.id, userId: conversationsTable.userId })
+        .from(conversationsTable)
+        .where(and(eq(conversationsTable.id, conversationId), eq(conversationsTable.userId, user.userId)))
+        .limit(1);
       if (!existing.length) conversationId = undefined;
     }
     if (!conversationId) {
@@ -100,14 +103,26 @@ router.post("/chat", requireAuth, async (req, res) => {
 });
 
 router.get("/chat/history", requireAuth, async (req, res) => {
+  const user = (req as any).user as JwtPayload;
   try {
     const { conversationId } = req.query;
-    if (!conversationId) {
+    if (!conversationId || typeof conversationId !== "string") {
       res.json({ messages: [] });
       return;
     }
+
+    const [conv] = await db.select({ id: conversationsTable.id, userId: conversationsTable.userId })
+      .from(conversationsTable)
+      .where(and(eq(conversationsTable.id, conversationId), eq(conversationsTable.userId, user.userId)))
+      .limit(1);
+
+    if (!conv) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
+
     const messages = await db.select().from(messagesTable)
-      .where(eq(messagesTable.conversationId, conversationId as string))
+      .where(eq(messagesTable.conversationId, conversationId))
       .orderBy(messagesTable.createdAt);
     res.json({ messages });
   } catch (err) {
@@ -116,7 +131,8 @@ router.get("/chat/history", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/chat/:agentId", async (req, res) => {
+router.post("/chat/:agentId", requireAuth, async (req, res) => {
+  const user = (req as any).user as JwtPayload;
   try {
     const { agentId } = req.params;
     const { message, conversationId: reqConvId } = z.object({
@@ -130,6 +146,11 @@ router.post("/chat/:agentId", async (req, res) => {
       return;
     }
 
+    if (user.organizationId !== agent.organizationId) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
+
     const [org] = await db.select({ credits: organizationsTable.credits })
       .from(organizationsTable).where(eq(organizationsTable.id, agent.organizationId)).limit(1);
 
@@ -140,7 +161,10 @@ router.post("/chat/:agentId", async (req, res) => {
 
     let conversationId = reqConvId;
     if (conversationId) {
-      const existing = await db.select({ id: conversationsTable.id }).from(conversationsTable).where(eq(conversationsTable.id, conversationId)).limit(1);
+      const existing = await db.select({ id: conversationsTable.id, agentId: conversationsTable.agentId })
+        .from(conversationsTable)
+        .where(and(eq(conversationsTable.id, conversationId), eq(conversationsTable.agentId, agentId)))
+        .limit(1);
       if (!existing.length) conversationId = undefined;
     }
     if (!conversationId) {

@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { organizationsTable, usersTable, agentsTable } from "@workspace/db";
+import { organizationsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { requireAuth, signToken, type JwtPayload } from "../lib/auth.js";
+import { requireAuth, requireOrgAdmin, signToken, type JwtPayload } from "../lib/auth.js";
 import { z } from "zod";
 
 const router = Router();
@@ -35,9 +35,16 @@ router.post("/onboarding", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/organization/:orgId", async (req, res) => {
+router.get("/organization/:orgId", requireAuth, async (req, res) => {
+  const user = (req as any).user as JwtPayload;
   try {
     const { orgId } = req.params;
+
+    if (user.organizationId !== orgId) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
+
     const [org] = await db.select({
       id: organizationsTable.id,
       name: organizationsTable.name,
@@ -56,9 +63,16 @@ router.get("/organization/:orgId", async (req, res) => {
   }
 });
 
-router.post("/organization/upgrade", requireAuth, async (req, res) => {
+router.post("/organization/upgrade", requireOrgAdmin, async (req, res) => {
+  const user = (req as any).user as JwtPayload;
   try {
     const { organizationId } = z.object({ organizationId: z.string() }).parse(req.body);
+
+    if (user.organizationId !== organizationId) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
+
     const [updated] = await db.update(organizationsTable)
       .set({ plan: "PREMIUM" })
       .where(eq(organizationsTable.id, organizationId))
@@ -70,12 +84,18 @@ router.post("/organization/upgrade", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/payments/recharge", requireAuth, async (req, res) => {
+router.post("/payments/recharge", requireOrgAdmin, async (req, res) => {
+  const user = (req as any).user as JwtPayload;
   try {
     const { organizationId, amount } = z.object({
       organizationId: z.string(),
       amount: z.number().positive(),
     }).parse(req.body);
+
+    if (user.organizationId !== organizationId) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
 
     const [org] = await db.select({ credits: organizationsTable.credits })
       .from(organizationsTable).where(eq(organizationsTable.id, organizationId)).limit(1);
