@@ -111,6 +111,7 @@ model Agent {
   status         AgentStatus  @default(ACTIVE)
   templateId     String?
   template       AgentTemplate? @relation(fields: [templateId], references: [id])
+  uiData         Json?
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   conversations  Conversation[]
@@ -134,6 +135,7 @@ model AgentTemplate {
   category      String
   pricePerMonth Int      @default(0)
   icon          String?
+  uiData        Json?
   agents        Agent[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

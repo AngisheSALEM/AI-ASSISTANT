@@ -47,7 +47,7 @@ export default function OnboardingPage() {
           },
         });
 
-        router.push("/copilot");
+        router.push("/onboarding/templates");
       } else {
         setError(data.error || "Une erreur est survenue");
         setLoading(false);
