@@ -1,10 +1,9 @@
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-
 function getApiBase(): string {
-  if (typeof window === "undefined") return "";
-  const port = 8080;
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:${port}/api`;
+  if (import.meta.env.VITE_API_BASE) {
+    return import.meta.env.VITE_API_BASE as string;
+  }
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  return `${base}/api`;
 }
 
 export const API_BASE = getApiBase();

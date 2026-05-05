@@ -66,6 +66,13 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    proxy: {
+      [`${basePath}/api`]: {
+        target: "http://localhost:8080",
+        rewrite: (p) => p.replace(new RegExp(`^${basePath}`), ""),
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port,

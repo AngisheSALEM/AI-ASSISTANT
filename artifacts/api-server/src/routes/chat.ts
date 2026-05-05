@@ -98,7 +98,7 @@ router.post("/chat", requireAuth, async (req, res) => {
     res.json({ text: aiText, conversationId });
   } catch (err: any) {
     console.error("Copilot chat error:", err);
-    res.status(500).json({ error: "Internal Server Error", details: err.message });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -192,7 +192,7 @@ router.post("/chat/:agentId", requireAuth, async (req, res) => {
     res.json({ response: aiText, conversationId });
   } catch (err: any) {
     console.error("Agent chat error:", err);
-    res.status(500).json({ error: "Internal Server Error", details: err.message });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
