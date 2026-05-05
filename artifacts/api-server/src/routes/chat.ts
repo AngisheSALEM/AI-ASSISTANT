@@ -64,16 +64,18 @@ router.post("/chat", requireAuth, async (req, res) => {
       conversationId: z.string().optional(),
     }).parse(req.body);
 
+    const userId = user.userId as string;
+
     let conversationId = reqConvId;
     if (conversationId) {
       const existing = await db.select({ id: conversationsTable.id, userId: conversationsTable.userId })
         .from(conversationsTable)
-        .where(and(eq(conversationsTable.id, conversationId), eq(conversationsTable.userId, user.userId)))
+        .where(and(eq(conversationsTable.id, conversationId), eq(conversationsTable.userId, userId)))
         .limit(1);
       if (!existing.length) conversationId = undefined;
     }
     if (!conversationId) {
-      const [conv] = await db.insert(conversationsTable).values({ userId: user.userId }).returning();
+      const [conv] = await db.insert(conversationsTable).values({ userId }).returning();
       conversationId = conv.id;
     }
 
@@ -134,7 +136,7 @@ router.get("/chat/history", requireAuth, async (req, res) => {
 router.post("/chat/:agentId", requireAuth, async (req, res) => {
   const user = (req as any).user as JwtPayload;
   try {
-    const { agentId } = req.params;
+    const { agentId } = z.object({ agentId: z.string() }).parse(req.params);
     const { message, conversationId: reqConvId } = z.object({
       message: z.string().min(1),
       conversationId: z.string().optional(),

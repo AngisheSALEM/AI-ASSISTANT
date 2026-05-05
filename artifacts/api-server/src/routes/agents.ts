@@ -134,7 +134,7 @@ router.post("/agents/create-from-template", requireOrgAdmin, async (req, res) =>
 router.delete("/agents/:agentId", requireOrgAdmin, async (req, res) => {
   const user = (req as any).user as JwtPayload;
   try {
-    const { agentId } = req.params;
+    const { agentId } = z.object({ agentId: z.string() }).parse(req.params);
     const [agent] = await db.select({ organizationId: agentsTable.organizationId })
       .from(agentsTable).where(eq(agentsTable.id, agentId)).limit(1);
 
