@@ -68,3 +68,4 @@ Pour configurer le cron sur Vercel, ajoutez un objet `crons` dans votre `vercel.
 ## 📞 Support Technique
 
 Pour toute question relative à l'intégration WhatsApp ou à la personnalisation des prompts, contactez l'équipe technique d'Agentia-Kin.
+ce projet est hyper cool
