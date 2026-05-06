@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { User, Cpu, Headphones, Stethoscope, Building2, TrendingUp } from "lucide-react";
 import { RentButton } from "./rent-button";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
+import { AgentTemplate } from "@/lib/types";
 
 const iconMap: Record<string, any> = {
   Headphones,
@@ -12,17 +13,8 @@ const iconMap: Record<string, any> = {
   TrendingUp,
 };
 
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  pricePerMonth: number;
-  icon: string | null;
-}
-
 interface TemplateListProps {
-  templates: Template[];
+  templates: Pick<AgentTemplate, 'id' | 'name' | 'description' | 'category' | 'pricePerMonth' | 'icon' | 'uiData'>[];
   orgId: string;
 }
 
@@ -67,9 +59,22 @@ export function TemplateList({ templates, orgId }: TemplateListProps) {
                 {template.name}
               </h3>
 
-              <p className="text-text-secondary dark:text-white/50 text-sm leading-relaxed mb-8 flex-grow line-clamp-3">
+              <p className="text-text-secondary dark:text-white/50 text-sm leading-relaxed mb-4 flex-grow line-clamp-3">
                 {template.description}
               </p>
+
+              {template.uiData?.features && (
+                <div className="mb-6 flex flex-wrap gap-2">
+                  {template.uiData.features.map((feature: string, index: number) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-blue-500/10 dark:bg-cyan-500/10 text-[10px] font-bold text-blue-600 dark:text-cyan-400 rounded-md border border-blue-500/20 dark:border-cyan-500/20"
+                    >
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <div className="flex items-center gap-2 mb-8 p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
                 <Cpu size={16} className="text-blue-500 dark:text-cyan-400" />
