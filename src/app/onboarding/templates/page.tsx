@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 import { FloatingChatbot } from "@/components/FloatingChatbot";
+import { AgentTemplate } from "@/lib/types";
 
 const iconMap: Record<string, any> = {
   Headphones,
@@ -27,15 +28,6 @@ const iconMap: Record<string, any> = {
   Gavel,
   Mail,
 };
-
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  icon: string | null;
-  uiData: any;
-}
 
 const TemplateSkeleton = () => (
   <div className="h-[400px] rounded-3xl bg-white/5 border border-white/10 animate-pulse p-8 flex flex-col">
@@ -52,7 +44,7 @@ const TemplateSkeleton = () => (
 export default function OnboardingTemplatesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<AgentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("Tous");

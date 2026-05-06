@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { TemplateList } from "@/components/marketplace/TemplateList";
+import { AgentTemplateUIData } from "@/lib/types";
 
 export default async function MarketplacePage({ params }: { params: { orgId: string } }) {
   const templates = await prisma.agentTemplate.findMany();
@@ -11,7 +12,8 @@ export default async function MarketplacePage({ params }: { params: { orgId: str
     description: t.description,
     category: t.category,
     pricePerMonth: t.pricePerMonth,
-    icon: t.icon
+    icon: t.icon,
+    uiData: t.uiData as unknown as AgentTemplateUIData
   }));
 
   return (
