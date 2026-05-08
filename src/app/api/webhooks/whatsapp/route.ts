@@ -4,8 +4,11 @@ import { prisma } from "@/lib/prisma"; // Notez les accolades {}
 import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getAgentModel } from "@/lib/ai/agent-engine";
-import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { StringOutputParser } from "@langchain/core/output_parsers";
+import { SystemMessage, HumanMessage, AIMessage, BaseMessage, ToolMessage } from "@langchain/core/messages";
+import { inngest } from "@/lib/inngest/client";
+import { getAvailableTools } from "@/lib/integrations/toolRegistry";
+import { Runnable } from "@langchain/core/runnables";
+import { redis } from "@/lib/redis";
 
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const WHATSAPP_APP_SECRET = process.env.WHATSAPP_APP_SECRET;
@@ -54,61 +57,139 @@ export async function POST(req: Request) {
       return NextResponse.json({ status: "ignored" });
     }
 
-    const from = message.from; // Numéro de téléphone de l'utilisateur
+    const from = message.from;
     const text = message.text.body;
-    const phoneId = value?.metadata?.phone_number_id; // ID du numéro WhatsApp de destination
+    const phoneId = value?.metadata?.phone_number_id;
 
-    // Recherche de l'organisation liée à ce whatsappPhoneNumberId
+    // 1. Identification de l'organisation et de l'agent
     const organization = await prisma.organization.findFirst({
-      where: {
-        whatsappPhoneNumberId: phoneId,
-      },
+      where: { whatsappPhoneNumberId: phoneId },
     });
 
     if (!organization || !organization.whatsappAccessToken) {
-      return NextResponse.json({ error: "Organization not configured for this phone number" }, { status: 404 });
+      return NextResponse.json({ error: "Organization not configured" }, { status: 404 });
     }
 
-    // Trouver l'agent actif pour cette organisation
-    // S'il y en a plusieurs, on pourrait avoir une logique plus complexe
-    // Ici on prend le premier agent actif.
     const agent = await prisma.agent.findFirst({
-      where: {
-        organizationId: organization.id,
-        status: "ACTIVE",
-      },
+      where: { organizationId: organization.id, status: "ACTIVE" },
     });
 
     if (!agent) {
       return NextResponse.json({ error: "No agent configured" }, { status: 404 });
     }
 
-    // Déterminer le coût (1 pour texte, 5 pour audio)
-    const isAudio = message.type === "audio" || message.type === "voice";
-    const creditCost = isAudio ? 5 : 1;
-
-    // Check credits
+    // 2. Gestion des Crédits
+    const creditCost = 1;
     const canProceed = await hasEnoughCredits(agent.organizationId, creditCost);
     if (!canProceed) {
       return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
     }
 
-    // 1. Recherche RAG
+    // 3. Récupération de la Mémoire Vive (Upstash Redis)
+    const sessionId = `wa_session_${from}`;
+    const sessionHistory: any[] = (await redis.get(sessionId)) || [];
+
+    // 4. Recherche RAG (Mémoire Longue)
     const contextResults = await similaritySearch(text, agent.organizationId);
     const contextText = contextResults
       .map((r) => `[Source: ${r.title}]\n${r.content}`)
       .join("\n\n");
 
-    // 2. Générer la réponse
+    // 5. Préparer le System Prompt Hermes
+    const hermesPrompt = `Tu es un Computer Agent autonome intégré à la plateforme Opere. Ta mission est d'agir comme un employé virtuel proactif pour l'organisation.
+
+Capacités :
+1. Action (Outils) : Tu ne te contentes pas de parler. Utilise les fonctions (tools) à ta disposition.
+2. Auto-Apprentissage (Skills) : Génère un Skill (JSON) via save_skill après une réussite.
+3. Gestion de l'Asynchronisme : Pour les tâches longues (> 15s), informe : 'Je m'en occupe en arrière-plan'.
+4. Mémoire : Consulte la KnowledgeBase pour les préférences client.
+
+Règle d'or : Si l'outil manque, suggère de configurer le connecteur API. Sois concis et pro.
+
+${agent.systemPrompt}
+
+CONTEXTE RELEVANT:
+${contextText || "Aucun contexte spécifique."}`;
+
+    // 6. Récupérer les outils
+    const tools = await getAvailableTools(agent.organizationId);
+
+    // 7. Initialiser le modèle
     const model = getAgentModel(agent.temperature);
-    const parser = new StringOutputParser();
+    let modelWithTools: Runnable = model;
+    if (tools.length > 0) {
+        // @ts-ignore
+        modelWithTools = model.bindTools(tools);
+    }
 
-    const responseText = await model.pipe(parser).invoke([
-      new SystemMessage(`${agent.systemPrompt}\n\nCONTEXTE:\n${contextText}`),
+    const messages: BaseMessage[] = [
+      new SystemMessage(hermesPrompt),
+      ...sessionHistory.map(m => m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content)),
       new HumanMessage(text),
-    ]);
+    ];
 
-    // 3. Envoyer la réponse via WhatsApp
+    let responseText = "";
+
+    // 8. Exécution avec Timeout (12s pour Vercel)
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout")), 12000)
+    );
+
+    try {
+        const result = await Promise.race([
+            (async () => {
+                let currentResult = await modelWithTools.invoke(messages);
+                let iterations = 0;
+                while (currentResult.tool_calls && currentResult.tool_calls.length > 0 && iterations < 3) {
+                    iterations++;
+                    messages.push(currentResult);
+                    for (const toolCall of currentResult.tool_calls) {
+                        const tool = tools.find((t) => t.name === toolCall.name);
+                        if (tool) {
+                            const toolResult = await tool.invoke(toolCall.args);
+                            messages.push(new ToolMessage({
+                                tool_call_id: toolCall.id!,
+                                content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult),
+                            }));
+                        }
+                    }
+                    currentResult = await modelWithTools.invoke(messages);
+                }
+                return currentResult;
+            })(),
+            timeoutPromise
+        ]);
+
+        responseText = (result as AIMessage).content as string;
+
+        // Sauvegarder la session dans Redis
+        sessionHistory.push({ role: 'user', content: text });
+        sessionHistory.push({ role: 'assistant', content: responseText });
+        await redis.set(sessionId, sessionHistory.slice(-10), { ex: 3600 }); // Garde 5 échanges, expire en 1h
+
+        // Déduire les crédits
+        await deductCredits(agent.organizationId, creditCost);
+
+    } catch (error: any) {
+        if (error.message === "Timeout") {
+            console.log("Delegating long task to Inngest...");
+            await inngest.send({
+                name: "agent/task.requested",
+                data: {
+                    agentId: agent.id,
+                    organizationId: agent.organizationId,
+                    text,
+                    from,
+                    phoneId
+                }
+            });
+            responseText = "Je m'occupe de votre demande en arrière-plan. Je vous tiens au courant dès que c'est terminé !";
+        } else {
+            throw error;
+        }
+    }
+
+    // 9. Réponse WhatsApp Finale
     await fetch(`https://graph.facebook.com/v19.0/${phoneId}/messages`, {
       method: "POST",
       headers: {
@@ -123,24 +204,6 @@ export async function POST(req: Request) {
         text: { body: responseText },
       }),
     });
-
-    // 4. Enregistrer dans la base de données (Conversation simplifiée)
-    // On pourrait chercher une conversation existante liée à ce numéro de téléphone
-    const conversation = await prisma.conversation.create({
-      data: {
-        agentId: agent.id,
-      },
-    });
-
-    await prisma.message.createMany({
-      data: [
-        { content: text, role: "user", conversationId: conversation.id },
-        { content: responseText, role: "assistant", conversationId: conversation.id },
-      ],
-    });
-
-    // Déduire les crédits
-    await deductCredits(agent.organizationId, creditCost);
 
     return NextResponse.json({ status: "success" });
   } catch (error) {
