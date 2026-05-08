@@ -116,6 +116,7 @@ model Agent {
   organization   Organization @relation(fields: [organizationId], references: [id])
   conversations  Conversation[]
   dailyReports   DailyReport[]
+  skills         Skill[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -196,4 +197,17 @@ model DailyReport {
 
   @@index([agentId])
   @@index([date])
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  procedure   Json
+  agentId     String
+  agent       Agent    @relation(fields: [agentId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([agentId])
 }

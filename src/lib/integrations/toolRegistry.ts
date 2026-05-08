@@ -73,6 +73,42 @@ export async function getAvailableTools(organizationId: string): Promise<Dynamic
     }
   }
 
+  // Add the save_skill tool for all agents to enable auto-learning
+  tools.push(
+    new DynamicStructuredTool({
+      name: "save_skill",
+      description: "Enregistre une nouvelle compétence ou procédure réussie pour l'organisation.",
+      schema: z.object({
+        name: z.string().describe("Le nom de la compétence (ex: 'Création facture Stripe')."),
+        description: z.string().describe("Une brève description de ce que fait cette compétence."),
+        procedure: z.string().describe("La liste détaillée des étapes ou le code JSON de la procédure."),
+      }),
+      func: async ({ name, description, procedure }) => {
+        try {
+          // On cherche un agent pour l'ID d'organisation (on prend le premier actif)
+          const agent = await prisma.agent.findFirst({
+            where: { organizationId, status: "ACTIVE" }
+          });
+
+          if (!agent) return "Erreur: Aucun agent actif trouvé pour enregistrer la compétence.";
+
+          await prisma.skill.create({
+            data: {
+              name,
+              description,
+              procedure: typeof procedure === 'string' ? { steps: procedure } : procedure,
+              agentId: agent.id,
+            }
+          });
+          return `Succès: La compétence '${name}' a été enregistrée et apprise.`;
+        } catch (error) {
+          console.error("Error saving skill:", error);
+          return `Erreur lors de l'enregistrement de la compétence: ${error}`;
+        }
+      },
+    })
+  );
+
   console.log('Final tools count:', tools.length);
   return tools;
 }
