@@ -1,5 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGroq } from "@langchain/groq";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 export interface AgentConfig {
   name: string;
@@ -10,6 +11,8 @@ export interface AgentConfig {
 }
 
 export function getAgentModel(temperature: number = 0.7) {
+  const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+
   // Use Groq Llama if possible as requested
   if (process.env.GROQ_API_KEY) {
     return new ChatGroq({
@@ -28,7 +31,12 @@ export function getAgentModel(temperature: number = 0.7) {
     });
   }
 
-  throw new Error("No AI API key configured (GROQ_API_KEY or OPENAI_API_KEY)");
+  // Fallback to Gemini (free) for testing
+  return new ChatGoogleGenerativeAI({
+    model: "gemini-1.5-flash",
+    temperature,
+    apiKey: FREE_GEMINI_KEY,
+  });
 }
 
 /**

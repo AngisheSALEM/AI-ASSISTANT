@@ -22,6 +22,7 @@
     "@ai-sdk/openai": "^3.0.58",
     "@ai-sdk/react": "^3.0.176",
     "@langchain/core": "^1.1.42",
+    "@langchain/google-genai": "^2.1.30",
     "@langchain/groq": "^1.2.0",
     "@langchain/openai": "^1.4.5",
     "@langchain/textsplitters": "^1.0.1",
