@@ -1,14 +1,21 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { LucideIcon, ArrowUpRight } from "lucide-react";
+import { LucideIcon, ArrowUpRight, MessageSquare, TrendingUp, Clock, Coins } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  MessageSquare,
+  TrendingUp,
+  Clock,
+  Coins,
+};
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
+  icon: string | LucideIcon;
   iconColor?: string;
   trend?: string;
   trendLabel?: string;
@@ -21,7 +28,7 @@ interface StatsCardProps {
 export function StatsCard({
   title,
   value,
-  icon: Icon,
+  icon,
   iconColor = "text-cyan-500",
   trend,
   trendLabel,
@@ -30,6 +37,8 @@ export function StatsCard({
   linkHref,
   linkLabel,
 }: StatsCardProps) {
+  const ResolvedIcon = typeof icon === "string" ? ICON_MAP[icon] || MessageSquare : icon;
+
   return (
     <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
@@ -53,7 +62,7 @@ export function StatsCard({
             {title}
           </p>
           <div className={cn("p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] group-hover:scale-110 transition-transform", iconColor)}>
-            <Icon size={16} />
+            <ResolvedIcon size={16} />
           </div>
         </div>
 

@@ -183,7 +183,7 @@ export default async function DashboardPage({
         <StatsCard
           title="Total Interactions"
           value={totalMessages}
-          icon={MessageSquare}
+          icon="MessageSquare"
           iconColor="text-cyan-500"
           trend="+12%"
           trendLabel="ce mois"
@@ -191,7 +191,7 @@ export default async function DashboardPage({
         <StatsCard
           title="Taux Resolution"
           value={`${resolutionRate}%`}
-          icon={TrendingUp}
+          icon="TrendingUp"
           iconColor="text-emerald-500"
           progress={resolutionRate}
           subtitle="Sans intervention humaine"
@@ -199,14 +199,14 @@ export default async function DashboardPage({
         <StatsCard
           title="Temps Economise"
           value={`${hoursSaved}h`}
-          icon={Clock}
+          icon="Clock"
           iconColor="text-blue-500"
           subtitle="Ce mois-ci"
         />
         <StatsCard
           title="Credits Restants"
           value={organization.credits}
-          icon={Coins}
+          icon="Coins"
           iconColor="text-amber-500"
           linkHref={`/${orgId}/billing`}
           linkLabel="Recharger"
