@@ -1,6 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { groq } from '@ai-sdk/groq';
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, tool, convertToCoreMessages } from 'ai';
 import { z } from 'zod';
 import { getServerSession } from "next-auth";
@@ -11,7 +11,7 @@ import { Plan } from "@prisma/client";
 export const maxDuration = 60;
 
 // Free Gemini API key for testing (limited usage)
-const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "AIzaSyDGSMx6smZs8_5hPNDofqKz-OdYBg0PVGE";
+const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
 interface SessionUser {
   id: string;
@@ -116,16 +116,20 @@ export async function POST(req: Request) {
     let model;
     let modelName = '';
     
+    const googleProvider = createGoogleGenerativeAI({
+      apiKey: FREE_GEMINI_KEY,
+    });
+
     switch (provider) {
       case 'gemini':
         // Use free Gemini for testing - always available
-        model = google('gemini-1.5-flash', { apiKey: FREE_GEMINI_KEY });
+        model = googleProvider('gemini-1.5-flash');
         modelName = 'gemini-1.5-flash';
         break;
       case 'groq':
         if (!process.env.GROQ_API_KEY) {
           // Fallback to Gemini if no Groq key
-          model = google('gemini-1.5-flash', { apiKey: FREE_GEMINI_KEY });
+          model = googleProvider('gemini-1.5-flash');
           modelName = 'gemini-1.5-flash (fallback)';
         } else {
           model = groq('llama-3.3-70b-versatile');
@@ -135,7 +139,7 @@ export async function POST(req: Request) {
       case 'openai':
         if (!process.env.OPENAI_API_KEY) {
           // Fallback to Gemini if no OpenAI key
-          model = google('gemini-1.5-flash', { apiKey: FREE_GEMINI_KEY });
+          model = googleProvider('gemini-1.5-flash');
           modelName = 'gemini-1.5-flash (fallback)';
         } else {
           model = openai('gpt-4o-mini');
@@ -144,7 +148,7 @@ export async function POST(req: Request) {
         break;
       default:
         // Default to Gemini (free)
-        model = google('gemini-1.5-flash', { apiKey: FREE_GEMINI_KEY });
+        model = googleProvider('gemini-1.5-flash');
         modelName = 'gemini-1.5-flash';
     }
 

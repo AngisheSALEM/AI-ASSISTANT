@@ -1,5 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGroq } from "@langchain/groq";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { prisma } from "@/lib/prisma";
 import { Plan } from "@prisma/client";
 
@@ -11,7 +12,7 @@ export const CREDIT_COSTS = {
 };
 
 // Free Gemini API key for testing
-const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "AIzaSyDGSMx6smZs8_5hPNDofqKz-OdYBg0PVGE";
+const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
 export async function getModelForOrganization(organizationId: string, temperature: number = 0.7, provider: string = 'gemini') {
   console.log(`[model-router] Fetching model for org: ${organizationId}, provider: ${provider}`);
@@ -31,10 +32,12 @@ export async function getModelForOrganization(organizationId: string, temperatur
   // Default to Gemini (free) for testing
   if (provider === 'gemini' || (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY)) {
     console.log(`[model-router] Using Gemini (free) for org ${organizationId}`);
-    // Note: For Langchain, we'd need @langchain/google-genai
-    // For now, return a placeholder that will be handled in the route
     return {
-      model: null, // Will use AI SDK directly in the route
+      model: new ChatGoogleGenerativeAI({
+        model: "gemini-1.5-flash",
+        temperature,
+        apiKey: FREE_GEMINI_KEY,
+      }),
       provider: 'gemini',
       cost: CREDIT_COSTS.GEMINI_TEXT,
       plan: org.plan,
@@ -75,7 +78,11 @@ export async function getModelForOrganization(organizationId: string, temperatur
   // Fallback to Gemini
   console.log(`[model-router] Falling back to Gemini for org ${organizationId}`);
   return {
-    model: null,
+    model: new ChatGoogleGenerativeAI({
+      model: "gemini-1.5-flash",
+      temperature,
+      apiKey: FREE_GEMINI_KEY,
+    }),
     provider: 'gemini',
     cost: CREDIT_COSTS.GEMINI_TEXT,
     plan: org.plan,

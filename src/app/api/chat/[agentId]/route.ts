@@ -131,10 +131,17 @@ export async function POST(
     `;
 
     // 8. Préparer le modèle avec les outils
-    let modelWithTools: Runnable = model;
+    if (!model) {
+      throw new Error("Model failed to initialize");
+    }
+
+    let modelWithTools: Runnable = model as unknown as Runnable;
     if (tools.length > 0) {
-        // @ts-ignore - bindTools is available on ChatOpenAI and ChatGroq
-        modelWithTools = model.bindTools(tools);
+        if (typeof (model as any).bindTools === 'function') {
+            modelWithTools = (model as any).bindTools(tools);
+        } else {
+            console.warn("Model does not support bindTools, continuing without tools");
+        }
     }
 
     const messages: BaseMessage[] = [
