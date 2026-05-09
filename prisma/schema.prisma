@@ -10,6 +10,7 @@ datasource db {
 
 model Organization {
   id                    String          @id @default(cuid())
+  clerkId               String?         @unique
   name                  String
   logo                  String?
   plan                  Plan            @default(FREE)
@@ -21,6 +22,8 @@ model Organization {
   knowledgeBase         KnowledgeBase[]
   subscriptions         Subscription[]
   integrations          Integration[]
+  skills                Skill[]
+  memories              Memory[]
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 }
@@ -46,6 +49,7 @@ enum Plan {
 
 model User {
   id             String       @id @default(cuid())
+  clerkId        String?      @unique
   name           String?
   email          String?      @unique
   emailVerified  DateTime?
@@ -196,4 +200,31 @@ model DailyReport {
 
   @@index([agentId])
   @@index([date])
+}
+
+model Skill {
+  id             String       @id @default(cuid())
+  name           String
+  description    String
+  toolName       String
+  schema         Json
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+model Memory {
+  id             String       @id @default(cuid())
+  content        String
+  embedding      Unsupported("vector(1536)")?
+  metadata       Json?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
 }

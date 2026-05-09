@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { prisma } from "@/lib/prisma"; // Notez les accolades {}
-import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
-import { similaritySearch } from "@/lib/ai/vector-store";
-import { getAgentModel } from "@/lib/ai/agent-engine";
-import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { StringOutputParser } from "@langchain/core/output_parsers";
+import { prisma } from "@/lib/prisma";
+import { inngest } from "@/lib/inngest/client";
 
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const WHATSAPP_APP_SECRET = process.env.WHATSAPP_APP_SECRET;
@@ -83,66 +79,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No agent configured" }, { status: 404 });
     }
 
-    // Déterminer le coût (1 pour texte, 5 pour audio)
-    const isAudio = message.type === "audio" || message.type === "voice";
-    const creditCost = isAudio ? 5 : 1;
-
-    // Check credits
-    const canProceed = await hasEnoughCredits(agent.organizationId, creditCost);
-    if (!canProceed) {
-      return NextResponse.json({ error: "Insufficient credits" }, { status: 403 });
-    }
-
-    // 1. Recherche RAG
-    const contextResults = await similaritySearch(text, agent.organizationId);
-    const contextText = contextResults
-      .map((r) => `[Source: ${r.title}]\n${r.content}`)
-      .join("\n\n");
-
-    // 2. Générer la réponse
-    const model = getAgentModel(agent.temperature);
-    const parser = new StringOutputParser();
-
-    const responseText = await model.pipe(parser).invoke([
-      new SystemMessage(`${agent.systemPrompt}\n\nCONTEXTE:\n${contextText}`),
-      new HumanMessage(text),
-    ]);
-
-    // 3. Envoyer la réponse via WhatsApp
-    await fetch(`https://graph.facebook.com/v19.0/${phoneId}/messages`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${organization.whatsappAccessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: from,
-        type: "text",
-        text: { body: responseText },
-      }),
-    });
-
-    // 4. Enregistrer dans la base de données (Conversation simplifiée)
-    // On pourrait chercher une conversation existante liée à ce numéro de téléphone
-    const conversation = await prisma.conversation.create({
+    // Déléguer à Inngest pour éviter le timeout Vercel
+    await inngest.send({
+      name: "app/agent.message.received",
       data: {
+        message: text,
+        organizationId: organization.id,
+        phoneId: phoneId,
+        from: from,
         agentId: agent.id,
+        whatsappAccessToken: organization.whatsappAccessToken,
       },
     });
 
-    await prisma.message.createMany({
-      data: [
-        { content: text, role: "user", conversationId: conversation.id },
-        { content: responseText, role: "assistant", conversationId: conversation.id },
-      ],
-    });
-
-    // Déduire les crédits
-    await deductCredits(agent.organizationId, creditCost);
-
-    return NextResponse.json({ status: "success" });
+    return NextResponse.json({ status: "accepted" });
   } catch (error) {
     console.error("WhatsApp Webhook Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
