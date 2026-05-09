@@ -1,5 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { groq } from '@ai-sdk/groq';
+import { google } from '@ai-sdk/google';
 import { streamText, tool, convertToCoreMessages } from 'ai';
 import { z } from 'zod';
 import { getServerSession } from "next-auth";
@@ -8,6 +9,9 @@ import { prisma } from "@/lib/prisma";
 import { Plan } from "@prisma/client";
 
 export const maxDuration = 60;
+
+// Free Gemini API key for testing (limited usage)
+const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "AIzaSyDGSMx6smZs8_5hPNDofqKz-OdYBg0PVGE";
 
 interface SessionUser {
   id: string;
@@ -20,24 +24,13 @@ interface SessionUser {
 export async function POST(req: Request) {
   console.log('--- Chat API POST Request Started ---');
   try {
-    // Check for API Keys early - FAIL FAST instead of proceeding
-    if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
-      console.error("Missing AI API Keys (OPENAI_API_KEY or GROQ_API_KEY)");
-      return new Response(JSON.stringify({
-        error: 'Service Unavailable',
-        details: 'AI service is not configured. Please set OPENAI_API_KEY or GROQ_API_KEY.'
-      }), {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
     console.log('Parsing request body...');
     const body = await req.json();
-    const { messages: rawMessages, conversationId: requestedConversationId } = body;
+    const { messages: rawMessages, conversationId: requestedConversationId, provider = 'gemini' } = body;
     console.log('Request parameters:', {
       messageCount: rawMessages?.length,
-      requestedConversationId
+      requestedConversationId,
+      provider
     });
 
     console.log('Fetching session...');
@@ -119,31 +112,62 @@ export async function POST(req: Request) {
       console.log('User message saved');
     }
 
-    // Model selection: Prioritize Groq (Llama) as requested by the user
-    const model = process.env.GROQ_API_KEY
-      ? groq('llama-3.3-70b-versatile')
-      : openai('gpt-4o-mini');
+    // Model selection based on provider preference
+    let model;
+    let modelName = '';
+    
+    switch (provider) {
+      case 'gemini':
+        // Use free Gemini for testing - always available
+        model = google('gemini-1.5-flash', { apiKey: FREE_GEMINI_KEY });
+        modelName = 'gemini-1.5-flash';
+        break;
+      case 'groq':
+        if (!process.env.GROQ_API_KEY) {
+          // Fallback to Gemini if no Groq key
+          model = google('gemini-1.5-flash', { apiKey: FREE_GEMINI_KEY });
+          modelName = 'gemini-1.5-flash (fallback)';
+        } else {
+          model = groq('llama-3.3-70b-versatile');
+          modelName = 'llama-3.3-70b-versatile';
+        }
+        break;
+      case 'openai':
+        if (!process.env.OPENAI_API_KEY) {
+          // Fallback to Gemini if no OpenAI key
+          model = google('gemini-1.5-flash', { apiKey: FREE_GEMINI_KEY });
+          modelName = 'gemini-1.5-flash (fallback)';
+        } else {
+          model = openai('gpt-4o-mini');
+          modelName = 'gpt-4o-mini';
+        }
+        break;
+      default:
+        // Default to Gemini (free)
+        model = google('gemini-1.5-flash', { apiKey: FREE_GEMINI_KEY });
+        modelName = 'gemini-1.5-flash';
+    }
 
-    console.log('Starting streamText with model:', process.env.GROQ_API_KEY ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini');
+    console.log('Starting streamText with model:', modelName);
 
     console.log('Calling streamText...');
     const result = await streamText({
       model: model as any,
       messages: convertToCoreMessages(normalizedMessages),
       system: `Tu es "Opere Copilot", un assistant intelligent pour les entreprises.
-      Ton rôle est d'aider l'utilisateur à configurer et gérer ses agents IA.
+      Ton role est d'aider l'utilisateur a configurer et gerer ses agents IA.
 
-      Tu peux utiliser des outils pour afficher des interfaces spécifiques :
-      - Utilisez request_agent_selection pour permettre à l'utilisateur de choisir un type d'agent (Support, Vente, etc.).
-      - Utilisez request_whatsapp_credentials quand l'utilisateur veut configurer son intégration WhatsApp.
-      - Utilisez show_insight_report pour afficher un rapport d'activité avec les KPIs.
+      Tu peux utiliser des outils pour afficher des interfaces specifiques :
+      - Utilisez request_agent_selection pour permettre a l'utilisateur de choisir un type d'agent (Support, Vente, etc.).
+      - Utilisez request_whatsapp_credentials quand l'utilisateur veut configurer son integration WhatsApp.
+      - Utilisez show_insight_report pour afficher un rapport d'activite avec les KPIs.
 
-      Réponds de manière professionnelle et concise.`,
+      Reponds de maniere professionnelle et concise. Sois amical et serviable.`,
       tools: {
         request_agent_selection: tool({
-          description: 'Affiche l\'interface de sélection du type d\'agent.',
+          description: 'Affiche l\'interface de selection du type d\'agent.',
           parameters: z.object({
-            message: z.string().optional().describe('Un message optionnel à afficher au-dessus de la sélection.'),
+            message: z.string().optional().describe('Un message optionnel a afficher au-dessus de la selection.'),
           }),
           execute: async ({ message }) => {
             console.log('Executing tool: request_agent_selection', { message });
@@ -166,7 +190,7 @@ export async function POST(req: Request) {
         request_whatsapp_credentials: tool({
           description: 'Affiche le formulaire de configuration des identifiants WhatsApp.',
           parameters: z.object({
-            message: z.string().optional().describe('Un message optionnel à afficher au-dessus du formulaire.'),
+            message: z.string().optional().describe('Un message optionnel a afficher au-dessus du formulaire.'),
           }),
           execute: async ({ message }) => {
             console.log('Executing tool: request_whatsapp_credentials', { message });
@@ -174,7 +198,7 @@ export async function POST(req: Request) {
           },
         }),
         show_insight_report: tool({
-          description: 'Affiche un rapport d\'activité avec les KPIs.',
+          description: 'Affiche un rapport d\'activite avec les KPIs.',
           parameters: z.object({
             interactions: z.number(),
             resolutionRate: z.number(),
@@ -217,6 +241,7 @@ export async function POST(req: Request) {
     return result.toAIStreamResponse({
       headers: {
         'x-conversation-id': String(conversationId),
+        'x-model': modelName,
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
       }

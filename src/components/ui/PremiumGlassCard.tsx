@@ -32,25 +32,33 @@ export function PremiumGlassCard({ children, className }: PremiumGlassCardProps)
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -8 }}
+      whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className={cn(
         "relative overflow-hidden rounded-2xl transition-all duration-300",
-        "bg-white/40 backdrop-blur-md border border-white/20 shadow-glass",
-        "dark:bg-neutral-900/40 dark:border-white/10 dark:shadow-none dark:backdrop-blur-xl dark:bg-gradient-to-br dark:from-white/[0.05] dark:to-transparent",
-        isHovered ? "border-white/40 dark:border-white/30" : "border-white/20 dark:border-white/10",
+        // Light mode
+        "bg-white/70 backdrop-blur-xl border border-black/[0.06] shadow-glass",
+        // Dark mode
+        "dark:bg-neutral-900/50 dark:border-white/[0.08] dark:shadow-glass-dark dark:backdrop-blur-xl",
+        // Hover states
+        isHovered 
+          ? "border-black/[0.1] dark:border-white/[0.15] shadow-lg" 
+          : "",
         className
       )}
     >
+      {/* Spotlight effect */}
       <motion.div
         className="pointer-events-none absolute -inset-px rounded-2xl transition duration-300"
         style={{
           background: useTransform(
             [spotlightX, spotlightY],
-            ([x, y]) => `radial-gradient(600px circle at ${x}px ${y}px, rgba(255,255,255,0.06), transparent 40%)`
+            ([x, y]) => `radial-gradient(600px circle at ${x}px ${y}px, rgba(6, 182, 212, 0.04), transparent 40%)`
           ),
         }}
       />
+      
+      {/* Content */}
       <div className="relative z-10">{children}</div>
     </motion.div>
   );

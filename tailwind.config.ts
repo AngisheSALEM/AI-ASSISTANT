@@ -14,38 +14,42 @@ const config: Config = {
     current: "currentColor",
     extend: {
       fontFamily: {
-        fraunces: ["var(--font-fraunces)", "serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
         inter: ["var(--font-inter)", "sans-serif"],
-        geist: ["var(--font-geist-sans)", "sans-serif"],
       },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
         border: "var(--border)",
-        zinc: {
-          950: "#09090b",
-        },
-        // Custom Light Theme Colors
+        "muted-foreground": "var(--text-muted)",
+        accent: "var(--accent-cyan)",
+        
+        // Custom theme colors
         light: {
-          bg: "#FFFFFF",
-          subtle: "#F7F8FA",
-          border: "#E4E7EB",
-          primary: "#121417",
-          secondary: "#636C77",
-          accent: "#3B82F6",
-          purple: "#8B5CF6",
-          success: "#10B981",
+          bg: "#FAFAFA",
+          subtle: "#F5F5F5",
+          border: "#E5E5E5",
+          primary: "#0A0A0A",
+          secondary: "#525252",
+          muted: "#737373",
         },
-        "text-primary": "#121417",
-        "text-secondary": "#636C77",
+        dark: {
+          bg: "#050505",
+          subtle: "#0F0F0F",
+          border: "rgba(255, 255, 255, 0.08)",
+          primary: "#FAFAFA",
+          secondary: "#A3A3A3",
+          muted: "#737373",
+        },
+        
         // tremor colors
         tremor: {
           brand: {
-            faint: colors.blue[50],
-            muted: colors.blue[200],
-            subtle: colors.blue[400],
-            DEFAULT: colors.blue[500],
-            emphasis: colors.blue[700],
+            faint: colors.cyan[50],
+            muted: colors.cyan[200],
+            subtle: colors.cyan[400],
+            DEFAULT: colors.cyan[500],
+            emphasis: colors.cyan[700],
             inverted: colors.white,
           },
           background: {
@@ -70,21 +74,18 @@ const config: Config = {
         },
       },
       boxShadow: {
-        // glass
-        "glass": "0 8px 32px 0 rgba(31,38,135,0.07)",
-        // tremor
+        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.04)",
+        "glass-dark": "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
         "tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
         "tremor-card": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
         "tremor-dropdown": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
       },
       borderRadius: {
-        // tremor
         "tremor-small": "0.375rem",
         "tremor-default": "0.5rem",
         "tremor-full": "9999px",
       },
       fontSize: {
-        // tremor
         "tremor-label": ["0.75rem", { lineHeight: "1rem" }],
         "tremor-default": ["0.875rem", { lineHeight: "1.25rem" }],
         "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
