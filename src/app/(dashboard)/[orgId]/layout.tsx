@@ -8,11 +8,14 @@ export default function DashboardLayout({
   params: { orgId: string };
 }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F7F8FA] dark:bg-black">
+    <div className="flex h-screen overflow-hidden bg-[#F7F8FA] dark:bg-[#050505]">
       <Sidebar orgId={params.orgId} />
-      <main className="flex-1 overflow-y-auto p-8 relative">
-        <div className="absolute inset-0 bg-white/40 dark:bg-transparent pointer-events-none" />
-        <div className="relative z-10">
+      <main className="flex-1 overflow-y-auto relative">
+        {/* Subtle gradient overlay for light mode */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.02] via-transparent to-blue-500/[0.02] pointer-events-none dark:hidden" />
+        
+        {/* Content */}
+        <div className="relative z-10 p-6 md:p-8">
           {children}
         </div>
       </main>

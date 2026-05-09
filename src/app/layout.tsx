@@ -35,8 +35,10 @@ export default function RootLayout({
           <AuthProvider>
             <div className="deep-space-bg dark:block hidden">
               <div className="noise-overlay" />
-              <div className="glow-circle glow-violet" />
+              <div className="grid-pattern" />
+              <div className="glow-circle glow-cyan" />
               <div className="glow-circle glow-blue" />
+              <div className="glow-circle glow-emerald" />
             </div>
             <PageTransition>{children}</PageTransition>
           </AuthProvider>
