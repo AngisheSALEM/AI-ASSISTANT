@@ -13,10 +13,13 @@ import {
   CreditCard,
   Settings,
   PlusCircle,
-  Zap
+  Zap,
+  ChevronLeft,
+  ChevronRight,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { CreditGauge } from "@/components/ui/CreditGauge";
 
 interface SidebarProps {
@@ -31,6 +34,7 @@ interface OrgData {
 export default function Sidebar({ orgId }: SidebarProps) {
   const [orgData, setOrgData] = useState<OrgData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -72,27 +76,75 @@ export default function Sidebar({ orgId }: SidebarProps) {
     { name: "My Agents", href: `/${orgId}/agents`, icon: UserSquare2 },
     { name: "Knowledge Base", href: `/${orgId}/knowledge`, icon: Database },
     { name: "Thinking Studio", href: `/${orgId}/thinking`, icon: Brain },
-    { name: "Insights & Reports", href: `/${orgId}/analytics`, icon: BarChart3 },
+    { name: "Insights", href: `/${orgId}/analytics`, icon: BarChart3 },
     { name: "Integrations", href: `/${orgId}/integrations`, icon: Plug },
-    { name: "Subscription & Billing", href: `/${orgId}/billing`, icon: CreditCard },
+    { name: "Billing", href: `/${orgId}/billing`, icon: CreditCard },
     { name: "Settings", href: `/${orgId}/settings`, icon: Settings },
   ];
 
   return (
-    <aside className="w-72 bg-white/70 dark:bg-black/50 backdrop-blur-xl border-r border-black/5 dark:border-white/5 flex flex-col h-screen sticky top-0 transition-colors">
-      <div className="p-8">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="p-2 bg-zinc-900 dark:bg-white/10 rounded-lg group-hover:scale-110 transition-transform">
-            <Zap size={20} className="text-white" />
-          </div>
-          <h1 className="text-xl font-bold font-fraunces tracking-tighter text-text-primary dark:text-white">Opere</h1>
+    <motion.aside
+      initial={false}
+      animate={{ width: isCollapsed ? 80 : 280 }}
+      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      className="glass-sidebar flex flex-col h-screen sticky top-0 transition-colors relative group"
+    >
+      {/* Collapse Toggle Button */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className={cn(
+          "absolute -right-3 top-8 z-50 p-1.5 rounded-full",
+          "bg-white dark:bg-zinc-800 border border-black/10 dark:border-white/10",
+          "shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+          "hover:bg-gray-50 dark:hover:bg-zinc-700"
+        )}
+      >
+        {isCollapsed ? (
+          <ChevronRight size={14} className="text-gray-600 dark:text-white/70" />
+        ) : (
+          <ChevronLeft size={14} className="text-gray-600 dark:text-white/70" />
+        )}
+      </button>
+
+      {/* Logo */}
+      <div className={cn("p-6", isCollapsed && "px-4")}>
+        <Link href="/" className="flex items-center gap-3 group/logo">
+          <motion.div 
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            className="p-2.5 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/20"
+          >
+            <Zap size={isCollapsed ? 18 : 20} className="text-white" />
+          </motion.div>
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.h1
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="text-xl font-bold font-fraunces tracking-tight text-text-primary dark:text-white"
+              >
+                Opere
+              </motion.h1>
+            )}
+          </AnimatePresence>
         </Link>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-        <div className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary dark:text-white/30">
-          Menu Principal
-        </div>
+      {/* Navigation */}
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto overflow-x-hidden">
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mb-4 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary dark:text-white/30"
+            >
+              Menu
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -100,62 +152,154 @@ export default function Sidebar({ orgId }: SidebarProps) {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center space-x-3 px-4 py-3 rounded-xl transition-all group",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/item relative",
+                isCollapsed && "justify-center px-0",
                 isActive
-                  ? "bg-black/5 dark:bg-white/10 text-text-primary dark:text-white shadow-sm"
-                  : "text-text-secondary dark:text-white/60 hover:text-text-primary dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/5"
+                  ? "bg-gradient-to-r from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/10 text-text-primary dark:text-white"
+                  : "text-text-secondary dark:text-white/50 hover:text-text-primary dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
               )}
             >
-              <item.icon size={20} className={cn("transition-transform group-hover:scale-110", isActive && "text-blue-600 dark:text-cyan-400")} />
-              <span className="text-sm font-medium">{item.name}</span>
+              {/* Active Indicator */}
+              {isActive && (
+                <motion.div
+                  layoutId="activeIndicator"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-r-full"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              
+              <item.icon 
+                size={20} 
+                className={cn(
+                  "shrink-0 transition-all duration-200",
+                  isActive && "text-cyan-500 dark:text-cyan-400",
+                  "group-hover/item:scale-110"
+                )} 
+              />
+              
+              <AnimatePresence>
+                {!isCollapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="text-sm font-medium whitespace-nowrap"
+                  >
+                    {item.name}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+
+              {/* Tooltip for collapsed state */}
+              {isCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-medium rounded-md opacity-0 group-hover/item:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+                  {item.name}
+                </div>
+              )}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-6 mt-auto">
-        {orgData && (
-          <div className="p-5 mb-6 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5 space-y-6">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary dark:text-white/40">Plan</span>
-              <span className={cn(
-                "text-[10px] px-2 py-0.5 rounded-full font-black tracking-widest uppercase border",
-                orgData.plan === "PREMIUM"
-                  ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20"
-                  : "bg-black/10 dark:bg-white/10 text-text-primary dark:text-white/60 border-transparent"
-              )}>
-                {orgData.plan}
-              </span>
-            </div>
+      {/* Bottom Section */}
+      <div className={cn("p-4 mt-auto space-y-4", isCollapsed && "px-2")}>
+        {/* Credits & Plan */}
+        <AnimatePresence>
+          {orgData && !isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="p-4 glass-card space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary dark:text-white/40">Plan</span>
+                <span className={cn(
+                  "text-[10px] px-2 py-0.5 rounded-full font-black tracking-widest uppercase",
+                  orgData.plan === "PREMIUM"
+                    ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30"
+                    : "bg-black/5 dark:bg-white/10 text-text-primary dark:text-white/60"
+                )}>
+                  {orgData.plan}
+                </span>
+              </div>
 
-            <CreditGauge value={orgData.credits} max={orgData.plan === "PREMIUM" ? 2000 : 100} />
+              <CreditGauge value={orgData.credits} max={orgData.plan === "PREMIUM" ? 2000 : 100} />
 
-            {orgData.plan !== "PREMIUM" && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleUpgrade}
-                disabled={loading}
-                className="w-full flex items-center justify-center space-x-2 bg-zinc-900 dark:bg-white text-white dark:text-black py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-black/5 dark:shadow-white/5 disabled:opacity-50"
-              >
-                <Zap size={14} fill="currentColor" />
-                <span>{loading ? "..." : "Upgrade"}</span>
-              </motion.button>
+              {orgData.plan !== "PREMIUM" && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleUpgrade}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-black py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+                >
+                  <Zap size={14} />
+                  <span>{loading ? "..." : "Upgrade"}</span>
+                </motion.button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* WhatsApp CTA Button - Primary Action */}
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Link 
+            href={`/${orgId}/integrations?setup=whatsapp`}
+            className={cn(
+              "flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all",
+              "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700",
+              "text-white shadow-lg shadow-emerald-500/25",
+              isCollapsed && "px-3"
             )}
-          </div>
-        )}
+          >
+            <MessageCircle size={isCollapsed ? 20 : 18} />
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="text-sm whitespace-nowrap overflow-hidden"
+                >
+                  WhatsApp
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        </motion.div>
 
+        {/* New Agent Button */}
         <Link href={`/${orgId}/marketplace`}>
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-cyan-500 dark:to-blue-600 hover:from-blue-700 hover:to-indigo-700 dark:hover:from-cyan-600 dark:hover:to-blue-700 text-white py-4 rounded-2xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20 cursor-pointer"
+            className={cn(
+              "flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all cursor-pointer",
+              "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700",
+              "text-white shadow-lg shadow-blue-500/25",
+              isCollapsed && "px-3"
+            )}
           >
-            <PlusCircle size={20} />
-            <span>Nouvel Agent</span>
+            <PlusCircle size={isCollapsed ? 20 : 18} />
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="text-sm whitespace-nowrap overflow-hidden"
+                >
+                  Nouvel Agent
+                </motion.span>
+              )}
+            </AnimatePresence>
           </motion.div>
         </Link>
       </div>
-    </aside>
+    </motion.aside>
   );
 }

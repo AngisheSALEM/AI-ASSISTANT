@@ -4,11 +4,22 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
+    --background: #F7F8FA;
     --foreground: #121417;
     --text-primary: #121417;
     --text-secondary: #636C77;
     --border: #E4E7EB;
+    
+    /* Neon Accent Colors */
+    --neon-cyan: #00F0FF;
+    --neon-blue: #3B82F6;
+    --neon-emerald: #10B981;
+    --neon-amber: #F59E0B;
+    
+    /* Glass Variables */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
 
     --tremor-background-muted: #f9fafb;
     --tremor-background-subtle: #f3f4f6;
@@ -23,13 +34,24 @@
   }
 
   .dark {
-    --background: #000000;
+    --background: #050505;
     --foreground: #ffffff;
-    --border: rgba(255, 255, 255, 0.1);
+    --border: rgba(255, 255, 255, 0.08);
+    
+    /* Neon Accent Colors - More vibrant in dark mode */
+    --neon-cyan: #00F0FF;
+    --neon-blue: #60A5FA;
+    --neon-emerald: #34D399;
+    --neon-amber: #FBBF24;
+    
+    /* Glass Variables - Dark mode */
+    --glass-bg: rgba(15, 15, 15, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 
     --tremor-background-muted: #111827;
     --tremor-background-subtle: #1f2937;
-    --tremor-background-default: #000000;
+    --tremor-background-default: #050505;
     --tremor-background-emphasis: #d1d5db;
     --tremor-border-default: #374151;
     --tremor-ring-default: #1f2937;
@@ -53,15 +75,78 @@ body {
 }
 
 @layer utilities {
-  .glass-light {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-glass;
+  /* Enhanced Glassmorphism Classes */
+  .glass {
+    @apply bg-white/70 dark:bg-white/[0.03] backdrop-blur-xl border border-white/30 dark:border-white/[0.08];
+    box-shadow: var(--glass-shadow);
   }
-
-  .glass-dark {
-    @apply bg-neutral-900/40 backdrop-blur-md border border-white/10;
+  
+  .glass-card {
+    @apply relative overflow-hidden rounded-2xl;
+    @apply bg-white/60 dark:bg-white/[0.04] backdrop-blur-2xl;
+    @apply border border-white/40 dark:border-white/[0.08];
+    @apply shadow-lg shadow-black/[0.03] dark:shadow-black/30;
+    @apply transition-all duration-300;
+  }
+  
+  .glass-card:hover {
+    @apply border-white/60 dark:border-white/[0.15];
+    @apply shadow-xl shadow-black/[0.05] dark:shadow-black/40;
+  }
+  
+  .glass-sidebar {
+    @apply bg-white/80 dark:bg-black/60 backdrop-blur-2xl;
+    @apply border-r border-black/[0.05] dark:border-white/[0.06];
+  }
+  
+  /* Neon Glow Effects */
+  .neon-glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), 0 0 40px rgba(0, 240, 255, 0.1);
+  }
+  
+  .neon-glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2), 0 0 40px rgba(59, 130, 246, 0.1);
+  }
+  
+  .neon-text-cyan {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  }
+  
+  .neon-text-blue {
+    color: var(--neon-blue);
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+  
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400;
+  }
+  
+  /* Status Indicators */
+  .status-active {
+    @apply relative;
+  }
+  
+  .status-active::before {
+    content: '';
+    @apply absolute -left-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-emerald-400;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+  }
+  
+  .status-pending::before {
+    @apply bg-amber-400;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+  }
+  
+  .status-inactive::before {
+    @apply bg-gray-400;
+    box-shadow: none;
   }
 }
 
+/* Deep Space Background - Enhanced */
 .deep-space-bg {
   position: fixed;
   top: 0;
@@ -69,7 +154,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background: #000000;
+  background: linear-gradient(135deg, #050505 0%, #0a0a0f 50%, #050510 100%);
   overflow: hidden;
 }
 
@@ -77,48 +162,73 @@ body {
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.02;
+  opacity: 0.015;
   pointer-events: none;
 }
 
+/* Animated Glow Orbs */
 .glow-circle {
   position: absolute;
-  width: 600px;
-  height: 600px;
   border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.15;
-  animation: move-glow 20s linear infinite;
+  filter: blur(100px);
+  opacity: 0.12;
+  animation: float-glow 25s ease-in-out infinite;
 }
 
-.glow-violet {
-  background: radial-gradient(circle, #7c3aed, transparent 70%);
-  top: -10%;
-  left: -10%;
+.glow-cyan {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, var(--neon-cyan), transparent 70%);
+  top: -15%;
+  right: 10%;
 }
 
 .glow-blue {
+  width: 600px;
+  height: 600px;
   background: radial-gradient(circle, #1e40af, transparent 70%);
-  bottom: -10%;
-  right: -10%;
-  animation-delay: -10s;
+  bottom: -20%;
+  left: -10%;
+  animation-delay: -12s;
 }
 
-@keyframes move-glow {
+.glow-emerald {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--neon-emerald), transparent 70%);
+  top: 50%;
+  right: -5%;
+  animation-delay: -8s;
+  opacity: 0.08;
+}
+
+@keyframes float-glow {
   0%, 100% {
-    transform: translate(0, 0);
+    transform: translate(0, 0) scale(1);
   }
   25% {
-    transform: translate(100px, 50px);
+    transform: translate(60px, 40px) scale(1.1);
   }
   50% {
-    transform: translate(50px, 150px);
+    transform: translate(30px, 80px) scale(0.95);
   }
   75% {
-    transform: translate(-50px, 100px);
+    transform: translate(-40px, 50px) scale(1.05);
   }
 }
 
+/* Grid Pattern Overlay */
+.grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 50% at 50% 50%, black, transparent);
+}
+
+/* Animations */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -126,4 +236,46 @@ body {
 
 .animate-shimmer {
   animation: shimmer 2s infinite;
+}
+
+@keyframes pulse-neon {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.7;
+    filter: brightness(1.2);
+  }
+}
+
+.animate-pulse-neon {
+  animation: pulse-neon 2s ease-in-out infinite;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
