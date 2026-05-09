@@ -121,7 +121,7 @@ export default function Sidebar({ orgId }: SidebarProps) {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="text-xl font-bold font-fraunces tracking-tight text-text-primary dark:text-white"
+                className="text-xl font-bold tracking-tight text-foreground"
               >
                 Opere
               </motion.h1>
@@ -138,7 +138,7 @@ export default function Sidebar({ orgId }: SidebarProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="mb-4 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary dark:text-white/30"
+              className="mb-4 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground"
             >
               Menu
             </motion.div>
@@ -155,8 +155,8 @@ export default function Sidebar({ orgId }: SidebarProps) {
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/item relative",
                 isCollapsed && "justify-center px-0",
                 isActive
-                  ? "bg-gradient-to-r from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/10 text-text-primary dark:text-white"
-                  : "text-text-secondary dark:text-white/50 hover:text-text-primary dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
+                  ? "bg-gradient-to-r from-cyan-500/10 to-blue-500/10 text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.03]"
               )}
             >
               {/* Active Indicator */}
@@ -213,12 +213,12 @@ export default function Sidebar({ orgId }: SidebarProps) {
               className="p-4 glass-card space-y-4"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary dark:text-white/40">Plan</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Plan</span>
                 <span className={cn(
                   "text-[10px] px-2 py-0.5 rounded-full font-black tracking-widest uppercase",
                   orgData.plan === "PREMIUM"
                     ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30"
-                    : "bg-black/5 dark:bg-white/10 text-text-primary dark:text-white/60"
+                    : "bg-foreground/5 text-muted-foreground"
                 )}>
                   {orgData.plan}
                 </span>
@@ -232,7 +232,7 @@ export default function Sidebar({ orgId }: SidebarProps) {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleUpgrade}
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-black py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 bg-foreground text-background py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 hover:bg-foreground/90"
                 >
                   <Zap size={14} />
                   <span>{loading ? "..." : "Upgrade"}</span>

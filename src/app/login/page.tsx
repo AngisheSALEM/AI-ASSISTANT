@@ -47,19 +47,19 @@ export default function LoginPage() {
         className="w-full max-w-md"
       >
         <Link href="/" className="flex items-center justify-center mb-8 group">
-          <div className="p-2 bg-white/10 rounded-xl group-hover:rotate-12 transition-transform">
-            <Zap className="h-6 w-6 text-white" />
+          <div className="p-2 bg-foreground/10 rounded-xl group-hover:rotate-12 transition-transform border border-border">
+            <Zap className="h-6 w-6 text-foreground" />
           </div>
-          <span className="ml-3 text-2xl font-bold font-fraunces tracking-tighter text-white">Opere</span>
+          <span className="ml-3 text-2xl font-bold tracking-tight text-foreground">Opere</span>
         </Link>
 
-        <PremiumGlassCard className="p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold font-fraunces text-white mb-2">Bon retour !</h1>
-            <p className="text-white/50 text-sm">Connectez-vous à votre compte Opere</p>
+        <PremiumGlassCard className="p-6 sm:p-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-foreground mb-2">Bon retour !</h2>
+            <p className="text-muted-foreground text-sm">Connectez-vous a votre compte Opere</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             {error && (
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm text-center">
                 {error}
@@ -67,31 +67,31 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Email</label>
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Email</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-colors"
+                  className="w-full bg-foreground/5 border border-border rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cyan-500/50 transition-colors"
                   placeholder="nom@entreprise.com"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Mot de passe</label>
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Mot de passe</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-colors"
-                  placeholder="••••••••"
+                  className="w-full bg-foreground/5 border border-border rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cyan-500/50 transition-colors"
+                  placeholder="********"
                 />
               </div>
             </div>
@@ -99,22 +99,22 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-white text-black rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 sm:py-4 bg-foreground text-background rounded-xl font-semibold text-sm hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Se connecter"}
             </button>
           </form>
 
-          <div className="relative my-8 text-center">
+          <div className="relative my-6 sm:my-8 text-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/5"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
-            <span className="relative px-4 text-xs uppercase tracking-widest text-white/20 bg-transparent">Ou continuer avec</span>
+            <span className="relative px-4 text-xs uppercase tracking-widest text-muted-foreground bg-background/50 backdrop-blur-sm">Ou continuer avec</span>
           </div>
 
           <button
             onClick={() => signIn("google", { callbackUrl: "/copilot" })}
-            className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-3"
+            className="w-full py-3 bg-foreground/5 border border-border rounded-xl text-foreground text-sm font-medium hover:bg-foreground/10 transition-colors flex items-center justify-center gap-3"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -137,10 +137,10 @@ export default function LoginPage() {
             Google
           </button>
 
-          <p className="mt-8 text-center text-sm text-white/40">
+          <p className="mt-6 sm:mt-8 text-center text-sm text-muted-foreground">
             Pas encore de compte ?{" "}
-            <Link href="/register" className="text-white hover:underline font-medium">
-              S'inscrire
+            <Link href="/register" className="text-foreground hover:underline font-medium">
+              {"S'inscrire"}
             </Link>
           </p>
         </PremiumGlassCard>

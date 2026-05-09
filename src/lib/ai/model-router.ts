@@ -4,13 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { Plan } from "@prisma/client";
 
 export const CREDIT_COSTS = {
+  GEMINI_TEXT: 0, // Free for testing
   GROQ_TEXT: 1,
   OPENAI_TEXT: 5,
   VOICE: 10,
 };
 
-export async function getModelForOrganization(organizationId: string, temperature: number = 0.7) {
-  console.log(`[model-router] Fetching model for org: ${organizationId}`);
+// Free Gemini API key for testing
+const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || "AIzaSyDGSMx6smZs8_5hPNDofqKz-OdYBg0PVGE";
+
+export async function getModelForOrganization(organizationId: string, temperature: number = 0.7, provider: string = 'gemini') {
+  console.log(`[model-router] Fetching model for org: ${organizationId}, provider: ${provider}`);
 
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
@@ -24,8 +28,21 @@ export async function getModelForOrganization(organizationId: string, temperatur
 
   console.log(`[model-router] Org plan: ${org.plan}`);
 
-  // User requested Llama (Groq) for debugging/cost reasons
-  if (process.env.GROQ_API_KEY) {
+  // Default to Gemini (free) for testing
+  if (provider === 'gemini' || (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY)) {
+    console.log(`[model-router] Using Gemini (free) for org ${organizationId}`);
+    // Note: For Langchain, we'd need @langchain/google-genai
+    // For now, return a placeholder that will be handled in the route
+    return {
+      model: null, // Will use AI SDK directly in the route
+      provider: 'gemini',
+      cost: CREDIT_COSTS.GEMINI_TEXT,
+      plan: org.plan,
+    };
+  }
+
+  // Use Groq if requested and available
+  if (provider === 'groq' && process.env.GROQ_API_KEY) {
     console.log(`[model-router] Using Groq Llama for org ${organizationId}`);
     return {
       model: new ChatGroq({
@@ -34,25 +51,33 @@ export async function getModelForOrganization(organizationId: string, temperatur
         apiKey: process.env.GROQ_API_KEY,
         streaming: true,
       }),
+      provider: 'groq',
       cost: CREDIT_COSTS.GROQ_TEXT,
       plan: org.plan,
     };
   }
 
-  // Fallback to OpenAI if Groq is not configured
-  if (process.env.OPENAI_API_KEY) {
-    console.warn(`[model-router] GROQ_API_KEY missing, falling back to OpenAI for org ${organizationId}`);
+  // Use OpenAI if requested and available
+  if (provider === 'openai' && process.env.OPENAI_API_KEY) {
+    console.log(`[model-router] Using OpenAI for org ${organizationId}`);
     return {
       model: new ChatOpenAI({
         modelName: org.plan === Plan.PREMIUM ? "gpt-4o" : "gpt-4o-mini",
         temperature,
         streaming: true,
       }),
+      provider: 'openai',
       cost: CREDIT_COSTS.OPENAI_TEXT,
       plan: org.plan,
     };
   }
 
-  console.error(`[model-router] No AI API key configured`);
-  throw new Error("No AI API key configured. Set GROQ_API_KEY or OPENAI_API_KEY.");
+  // Fallback to Gemini
+  console.log(`[model-router] Falling back to Gemini for org ${organizationId}`);
+  return {
+    model: null,
+    provider: 'gemini',
+    cost: CREDIT_COSTS.GEMINI_TEXT,
+    plan: org.plan,
+  };
 }
