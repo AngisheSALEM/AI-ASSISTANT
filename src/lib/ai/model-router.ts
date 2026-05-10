@@ -1,6 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGroq } from "@langchain/groq";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getPreferredGeminiModel } from "./google-models";
 import { prisma } from "@/lib/prisma";
 import { Plan } from "@prisma/client";
 
@@ -35,16 +36,17 @@ export async function getModelForOrganization(organizationId: string, temperatur
 
   // Always prefer Gemini (free) as requested - Temporary solution
   const forceGemini = true;
+  const preferredGeminiModel = getPreferredGeminiModel();
 
   if (forceGemini || (provider === 'gemini' && hasGeminiKey)) {
     if (!hasGeminiKey) {
       console.error(`[model-router] Gemini API key is missing for org ${organizationId}`);
       throw new Error("Gemini API key is missing. Please set GOOGLE_GENERATIVE_AI_API_KEY.");
     }
-    console.log(`[model-router] Using Gemini (free) for org ${organizationId} (Force: ${forceGemini})`);
+    console.log(`[model-router] Using Gemini (${preferredGeminiModel}) for org ${organizationId} (Force: ${forceGemini})`);
     return {
       model: new ChatGoogleGenerativeAI({
-        model: "gemini-1.5-flash",
+        model: preferredGeminiModel,
         temperature,
         apiKey: FREE_GEMINI_KEY,
       }),
@@ -92,7 +94,7 @@ export async function getModelForOrganization(organizationId: string, temperatur
 
   return {
     model: new ChatGoogleGenerativeAI({
-      model: "gemini-1.5-flash",
+      model: preferredGeminiModel,
       temperature,
       apiKey: FREE_GEMINI_KEY || 'dummy-key',
     }),

@@ -1,6 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGroq } from "@langchain/groq";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getPreferredGeminiModel } from "./google-models";
 
 export interface AgentConfig {
   name: string;
@@ -18,13 +19,14 @@ export function getAgentModel(temperature: number = 0.7) {
 
   // Always prefer Gemini (free) as requested - Temporary solution
   const forceGemini = true;
+  const preferredGeminiModel = getPreferredGeminiModel();
 
   if (forceGemini) {
     if (!hasGeminiKey) {
       throw new Error("Gemini API key is missing. Please set GOOGLE_GENERATIVE_AI_API_KEY.");
     }
     return new ChatGoogleGenerativeAI({
-      model: "gemini-1.5-flash",
+      model: preferredGeminiModel,
       temperature,
       apiKey: FREE_GEMINI_KEY,
     });
@@ -50,7 +52,7 @@ export function getAgentModel(temperature: number = 0.7) {
 
   // Fallback to Gemini (free) for testing (last resort)
   return new ChatGoogleGenerativeAI({
-    model: "gemini-1.5-flash",
+    model: preferredGeminiModel,
     temperature,
     apiKey: FREE_GEMINI_KEY || 'dummy-key',
   });
