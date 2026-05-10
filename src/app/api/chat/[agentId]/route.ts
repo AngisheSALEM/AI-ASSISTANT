@@ -9,6 +9,7 @@ import { z } from "zod";
 import { inngest } from "@/lib/inngest/client";
 
 export const maxDuration = 60; // Allow time for AI inference + cold starts
+export const runtime = 'nodejs';
 
 const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
@@ -137,10 +138,11 @@ export async function POST(
     `;
 
     // 7. Start Streaming
+    const cleanHistoryMessages = historyMessages.map(({ role, content }: any) => ({ role, content }));
     const result = await streamText({
       model: model as any,
-      messages: historyMessages.length > 0
-        ? convertToCoreMessages(historyMessages)
+      messages: cleanHistoryMessages.length > 0
+        ? convertToCoreMessages(cleanHistoryMessages)
         : [{ role: 'user', content: message }],
       system: augmentedSystemPrompt,
       tools,
@@ -164,7 +166,7 @@ export async function POST(
 
     return result.toDataStreamResponse({
       headers: {
-        "X-Conversation-Id": currentConversationId,
+        "X-Conversation-Id": String(currentConversationId),
       },
     });
 

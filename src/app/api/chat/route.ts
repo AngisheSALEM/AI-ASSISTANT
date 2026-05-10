@@ -11,6 +11,7 @@ import { Plan } from "@prisma/client";
 import { inngest } from "@/lib/inngest/client";
 
 export const maxDuration = 60;
+export const runtime = 'nodejs';
 
 // Free Gemini API key for testing (limited usage)
 const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
