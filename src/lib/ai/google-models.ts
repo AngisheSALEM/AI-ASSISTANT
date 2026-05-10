@@ -13,7 +13,7 @@ export const GEMINI_MODELS = [
 
 export type GeminiModel = typeof GEMINI_MODELS[number];
 
-export const DEFAULT_GEMINI_MODEL: GeminiModel = 'gemini-3.1-flash-lite-preview';
+export const DEFAULT_GEMINI_MODEL: GeminiModel = 'gemini-1.5-flash';
 
 /**
  * Returns the preferred Gemini model identifier.
