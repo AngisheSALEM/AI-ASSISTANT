@@ -1,26 +1,25 @@
 import { inngest } from "@/lib/inngest/client";
 import { prisma } from "@/lib/prisma";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getAgentModel } from "@/lib/ai/agent-engine";
-import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { StringOutputParser } from "@langchain/core/output_parsers";
 import { SKILL_GENERATION_PROMPT } from "@/lib/ai/prompts";
 
 export const agentWorkflow = inngest.createFunction(
   {
     id: "agent-workflow",
-    name: "Agent Workflow",
+    triggers: [{ event: "app/agent.message.received" }],
   },
-  { event: "app/agent.message.received" as any },
   // @ts-ignore
-  async ({ event, step }: any) => {
+  async ({ event, step }) => {
     const { message, organizationId, phoneId, from, agentId, whatsappAccessToken } = event.data;
 
     // 1. RAG Search
     const context = await step.run("rag-search", async () => {
       const results = await similaritySearch(message, organizationId);
       return results
-        .map((r) => `[Source: ${r.title}]\n${r.content}`)
+        .map((r: any) => `[Source: ${r.title}]\n${r.content}`)
         .join("\n\n");
     });
 
@@ -71,15 +70,12 @@ export const agentWorkflow = inngest.createFunction(
     });
 
     // 5. Skill Generation (Learning loop)
-    // Here we simulate checking if a tool was used successfully.
-    // In a real scenario, we would check the message metadata or history.
     await step.run("skill-generation", async () => {
-      // Mock condition: if the response mentions a specific action (e.g., "facture", "email")
       const shouldGenerateSkill = responseText.toLowerCase().includes("facture") ||
                                    responseText.toLowerCase().includes("envoi");
 
       if (shouldGenerateSkill) {
-        const model = getAgentModel(0); // Low temperature for extraction
+        const model = getAgentModel(0);
         const parser = new StringOutputParser();
 
         const skillJson = await model.pipe(parser).invoke([

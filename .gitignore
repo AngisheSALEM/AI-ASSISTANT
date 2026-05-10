@@ -12,3 +12,5 @@ build/
 *.tsbuildinfo
 
 /src/generated/prisma
+playwright-report/
+test-results/
