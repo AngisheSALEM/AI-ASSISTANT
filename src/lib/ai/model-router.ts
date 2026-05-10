@@ -29,10 +29,14 @@ export async function getModelForOrganization(organizationId: string, temperatur
 
   console.log(`[model-router] Org plan: ${org.plan}`);
 
-  // Always prefer Gemini (free) as requested - Temporary solution
-  const forceGemini = true;
+  const hasGeminiKey = !!FREE_GEMINI_KEY && FREE_GEMINI_KEY !== 'AIza...';
+  const hasGroqKey = !!process.env.GROQ_API_KEY;
+  const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
 
-  if (forceGemini || provider === 'gemini' || (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY)) {
+  // Always prefer Gemini (free) as requested - Temporary solution, but only if key is present
+  const forceGemini = hasGeminiKey;
+
+  if (forceGemini || (provider === 'gemini' && hasGeminiKey)) {
     console.log(`[model-router] Using Gemini (free) for org ${organizationId} (Force: ${forceGemini})`);
     return {
       model: new ChatGoogleGenerativeAI({
@@ -46,8 +50,8 @@ export async function getModelForOrganization(organizationId: string, temperatur
     };
   }
 
-  // Use Groq if requested and available
-  if (provider === 'groq' && process.env.GROQ_API_KEY) {
+  // Fallback hierarchy if Gemini is not forced/available
+  if (hasGroqKey && (provider === 'groq' || !hasOpenAIKey)) {
     console.log(`[model-router] Using Groq Llama for org ${organizationId}`);
     return {
       model: new ChatGroq({
@@ -62,8 +66,7 @@ export async function getModelForOrganization(organizationId: string, temperatur
     };
   }
 
-  // Use OpenAI if requested and available
-  if (provider === 'openai' && process.env.OPENAI_API_KEY) {
+  if (hasOpenAIKey) {
     console.log(`[model-router] Using OpenAI for org ${organizationId}`);
     return {
       model: new ChatOpenAI({
@@ -77,13 +80,17 @@ export async function getModelForOrganization(organizationId: string, temperatur
     };
   }
 
-  // Fallback to Gemini
-  console.log(`[model-router] Falling back to Gemini for org ${organizationId}`);
+  // Final attempt: Fallback to Gemini even if key seems missing, to let the provider throw a descriptive error if it really is
+  console.log(`[model-router] Falling back to Gemini for org ${organizationId} (last resort)`);
+  if (!hasGeminiKey && !hasGroqKey && !hasOpenAIKey) {
+     console.warn(`[model-router] No API keys found for org ${organizationId}`);
+  }
+
   return {
     model: new ChatGoogleGenerativeAI({
       model: "gemini-1.5-flash",
       temperature,
-      apiKey: FREE_GEMINI_KEY,
+      apiKey: FREE_GEMINI_KEY || 'dummy-key',
     }),
     provider: 'gemini',
     cost: CREDIT_COSTS.GEMINI_TEXT,

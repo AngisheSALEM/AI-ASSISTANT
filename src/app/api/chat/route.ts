@@ -116,49 +116,40 @@ export async function POST(req: Request) {
     let model;
     let modelName = '';
     
+    const hasGeminiKey = !!FREE_GEMINI_KEY && FREE_GEMINI_KEY !== 'AIza...';
+    const hasGroqKey = !!process.env.GROQ_API_KEY;
+    const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+
     const googleProvider = createGoogleGenerativeAI({
-      apiKey: FREE_GEMINI_KEY,
+      apiKey: FREE_GEMINI_KEY || 'dummy-key',
     });
 
-    // Always prefer Gemini (free) as requested - Temporary solution
-    const forceGemini = true;
+    // Always prefer Gemini (free) as requested - Temporary solution, but only if key is present
+    const forceGemini = hasGeminiKey;
 
     if (forceGemini) {
       model = googleProvider('gemini-1.5-flash');
       modelName = 'gemini-1.5-flash (forced)';
+    } else if (hasGeminiKey && provider === 'gemini') {
+      model = googleProvider('gemini-1.5-flash');
+      modelName = 'gemini-1.5-flash';
+    } else if (hasGroqKey && (provider === 'groq' || !hasOpenAIKey)) {
+      model = groq('llama-3.3-70b-versatile');
+      modelName = 'llama-3.3-70b-versatile';
+    } else if (hasOpenAIKey) {
+      model = openai('gpt-4o-mini');
+      modelName = 'gpt-4o-mini';
     } else {
-      switch (provider) {
-        case 'gemini':
-          // Use free Gemini for testing - always available
-          model = googleProvider('gemini-1.5-flash');
-          modelName = 'gemini-1.5-flash';
-          break;
-        case 'groq':
-          if (!process.env.GROQ_API_KEY) {
-            // Fallback to Gemini if no Groq key
-            model = googleProvider('gemini-1.5-flash');
-            modelName = 'gemini-1.5-flash (fallback)';
-          } else {
-            model = groq('llama-3.3-70b-versatile');
-            modelName = 'llama-3.3-70b-versatile';
-          }
-          break;
-        case 'openai':
-          if (!process.env.OPENAI_API_KEY) {
-            // Fallback to Gemini if no OpenAI key
-            model = googleProvider('gemini-1.5-flash');
-            modelName = 'gemini-1.5-flash (fallback)';
-          } else {
-            model = openai('gpt-4o-mini');
-            modelName = 'gpt-4o-mini';
-          }
-          break;
-        default:
-          // Default to Gemini (free)
-          model = googleProvider('gemini-1.5-flash');
-          modelName = 'gemini-1.5-flash';
+      // Last resort fallback to Gemini if requested, even if key might be missing (to trigger proper provider error if still fails)
+      // but better to throw a clear error here if we know no keys are available
+      if (!hasGeminiKey && !hasGroqKey && !hasOpenAIKey) {
+        throw new Error("No AI API keys configured. Please set GOOGLE_GENERATIVE_AI_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY.");
       }
+
+      model = googleProvider('gemini-1.5-flash');
+      modelName = 'gemini-1.5-flash (final fallback)';
     }
+
 
     console.log('Starting streamText with model:', modelName);
 
