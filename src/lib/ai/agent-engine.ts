@@ -12,11 +12,14 @@ export interface AgentConfig {
 
 export function getAgentModel(temperature: number = 0.7) {
   const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  const hasGeminiKey = !!FREE_GEMINI_KEY && FREE_GEMINI_KEY !== 'AIza...';
+  const hasGroqKey = !!process.env.GROQ_API_KEY;
+  const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
 
-  // Always prefer Gemini (free) as requested - Temporary solution
-  const forceGemini = true;
+  // Always prefer Gemini (free) as requested - Temporary solution, but only if key is present
+  const forceGemini = hasGeminiKey;
 
-  if (forceGemini || (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY)) {
+  if (forceGemini) {
     return new ChatGoogleGenerativeAI({
       model: "gemini-1.5-flash",
       temperature,
@@ -25,7 +28,7 @@ export function getAgentModel(temperature: number = 0.7) {
   }
 
   // Use Groq Llama if possible
-  if (process.env.GROQ_API_KEY) {
+  if (hasGroqKey) {
     return new ChatGroq({
       model: "llama-3.3-70b-versatile",
       temperature,
@@ -34,7 +37,7 @@ export function getAgentModel(temperature: number = 0.7) {
     });
   }
 
-  if (process.env.OPENAI_API_KEY) {
+  if (hasOpenAIKey) {
     return new ChatOpenAI({
       modelName: "gpt-4o",
       temperature,
@@ -42,11 +45,11 @@ export function getAgentModel(temperature: number = 0.7) {
     });
   }
 
-  // Fallback to Gemini (free) for testing
+  // Fallback to Gemini (free) for testing (last resort)
   return new ChatGoogleGenerativeAI({
     model: "gemini-1.5-flash",
     temperature,
-    apiKey: FREE_GEMINI_KEY,
+    apiKey: FREE_GEMINI_KEY || 'dummy-key',
   });
 }
 
