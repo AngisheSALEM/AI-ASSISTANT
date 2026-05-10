@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Plan } from "@prisma/client";
+import { inngest } from "@/lib/inngest/client";
 
 export const maxDuration = 60;
 
@@ -102,15 +103,16 @@ export async function POST(req: Request) {
 
     const lastRawMessage = normalizedMessages[normalizedMessages.length - 1];
     if (lastRawMessage && lastRawMessage.role === 'user') {
-      console.log('Saving user message to DB...');
-      await prisma.message.create({
+      console.log('Sending user message to Inngest for background saving...');
+      await inngest.send({
+        name: 'chat/message.save',
         data: {
           role: 'user',
           content: typeof lastRawMessage.content === 'string' ? lastRawMessage.content : JSON.stringify(lastRawMessage.content),
           conversationId,
         }
       });
-      console.log('User message saved');
+      console.log('User message event sent to Inngest');
     }
 
     // Model selection based on provider preference
@@ -177,20 +179,25 @@ export async function POST(req: Request) {
           }),
           execute: async ({ message }) => {
             console.log('Executing tool: request_agent_selection', { message });
-            const templates = await prisma.agentTemplate.findMany();
-            return {
-              status: 'success',
-              ui: 'AGENT_SELECTION',
-              message,
-              templates: templates.map(t => ({
-                id: t.id,
-                name: t.name,
-                description: t.description,
-                category: t.category,
-                pricePerMonth: t.pricePerMonth,
-                icon: t.icon
-              }))
-            };
+            try {
+              const templates = await prisma.agentTemplate.findMany();
+              return {
+                status: 'success',
+                ui: 'AGENT_SELECTION',
+                message,
+                templates: templates.map(t => ({
+                  id: t.id,
+                  name: t.name,
+                  description: t.description,
+                  category: t.category,
+                  pricePerMonth: t.pricePerMonth,
+                  icon: t.icon
+                }))
+              };
+            } catch (error) {
+              console.error('Error in request_agent_selection tool:', error);
+              return { status: 'error', message: 'Failed to fetch templates' };
+            }
           },
         }),
         request_whatsapp_credentials: tool({
@@ -222,13 +229,15 @@ export async function POST(req: Request) {
           textLength: text?.length,
           toolResultsCount: toolResults?.length
         });
+
         try {
           const uiToolResult = toolResults?.find(r =>
             ['request_agent_selection', 'request_whatsapp_credentials', 'show_insight_report'].includes(r.toolName)
           );
 
-          console.log('Saving assistant message to DB...');
-          await prisma.message.create({
+          console.log('Sending assistant message to Inngest for background saving...');
+          await inngest.send({
+            name: 'chat/message.save',
             data: {
               role: 'assistant',
               content: text || null,
@@ -237,19 +246,18 @@ export async function POST(req: Request) {
               uiData: uiToolResult ? (uiToolResult.result as any) : null,
             }
           });
-          console.log('Assistant message saved');
+          console.log('Assistant message event sent to Inngest');
         } catch (error) {
-          console.error('Failed to save assistant message:', error);
+          console.error('Failed to send assistant message event to Inngest:', error);
         }
       },
     });
 
-    return result.toAIStreamResponse({
+    return result.toDataStreamResponse({
       headers: {
         'x-conversation-id': String(conversationId),
         'x-model': modelName,
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
       }
     });
   } catch (error: any) {
