@@ -33,10 +33,14 @@ export async function getModelForOrganization(organizationId: string, temperatur
   const hasGroqKey = !!process.env.GROQ_API_KEY;
   const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
 
-  // Always prefer Gemini (free) as requested - Temporary solution, but only if key is present
-  const forceGemini = hasGeminiKey;
+  // Always prefer Gemini (free) as requested - Temporary solution
+  const forceGemini = true;
 
   if (forceGemini || (provider === 'gemini' && hasGeminiKey)) {
+    if (!hasGeminiKey) {
+      console.error(`[model-router] Gemini API key is missing for org ${organizationId}`);
+      throw new Error("Gemini API key is missing. Please set GOOGLE_GENERATIVE_AI_API_KEY.");
+    }
     console.log(`[model-router] Using Gemini (free) for org ${organizationId} (Force: ${forceGemini})`);
     return {
       model: new ChatGoogleGenerativeAI({

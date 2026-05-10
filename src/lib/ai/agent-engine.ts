@@ -16,10 +16,13 @@ export function getAgentModel(temperature: number = 0.7) {
   const hasGroqKey = !!process.env.GROQ_API_KEY;
   const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
 
-  // Always prefer Gemini (free) as requested - Temporary solution, but only if key is present
-  const forceGemini = hasGeminiKey;
+  // Always prefer Gemini (free) as requested - Temporary solution
+  const forceGemini = true;
 
   if (forceGemini) {
+    if (!hasGeminiKey) {
+      throw new Error("Gemini API key is missing. Please set GOOGLE_GENERATIVE_AI_API_KEY.");
+    }
     return new ChatGoogleGenerativeAI({
       model: "gemini-1.5-flash",
       temperature,

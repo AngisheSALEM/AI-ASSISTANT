@@ -124,10 +124,14 @@ export async function POST(req: Request) {
       apiKey: FREE_GEMINI_KEY || 'dummy-key',
     });
 
-    // Always prefer Gemini (free) as requested - Temporary solution, but only if key is present
-    const forceGemini = hasGeminiKey;
+    // Always prefer Gemini (free) as requested - Temporary solution
+    // We prioritize Gemini to avoid falling back to paid providers like OpenAI
+    const forceGemini = true;
 
     if (forceGemini) {
+      if (!hasGeminiKey) {
+        throw new Error("Gemini API key is missing. Please set GOOGLE_GENERATIVE_AI_API_KEY.");
+      }
       model = googleProvider('gemini-1.5-flash');
       modelName = 'gemini-1.5-flash (forced)';
     } else if (hasGeminiKey && provider === 'gemini') {
@@ -140,12 +144,6 @@ export async function POST(req: Request) {
       model = openai('gpt-4o-mini');
       modelName = 'gpt-4o-mini';
     } else {
-      // Last resort fallback to Gemini if requested, even if key might be missing (to trigger proper provider error if still fails)
-      // but better to throw a clear error here if we know no keys are available
-      if (!hasGeminiKey && !hasGroqKey && !hasOpenAIKey) {
-        throw new Error("No AI API keys configured. Please set GOOGLE_GENERATIVE_AI_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY.");
-      }
-
       model = googleProvider('gemini-1.5-flash');
       modelName = 'gemini-1.5-flash (final fallback)';
     }
