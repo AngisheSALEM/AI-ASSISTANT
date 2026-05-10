@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Fail fast if no AI API keys are configured
-if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY) {
-  console.error("Warning: Missing AI API Keys at module load");
+// Warning if no AI API keys are configured
+if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+  console.error("Warning: Missing all AI API Keys at module load");
 }
 import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";

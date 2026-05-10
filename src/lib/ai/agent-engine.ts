@@ -13,7 +13,18 @@ export interface AgentConfig {
 export function getAgentModel(temperature: number = 0.7) {
   const FREE_GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
-  // Use Groq Llama if possible as requested
+  // Always prefer Gemini (free) as requested - Temporary solution
+  const forceGemini = true;
+
+  if (forceGemini || (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY)) {
+    return new ChatGoogleGenerativeAI({
+      model: "gemini-1.5-flash",
+      temperature,
+      apiKey: FREE_GEMINI_KEY,
+    });
+  }
+
+  // Use Groq Llama if possible
   if (process.env.GROQ_API_KEY) {
     return new ChatGroq({
       model: "llama-3.3-70b-versatile",

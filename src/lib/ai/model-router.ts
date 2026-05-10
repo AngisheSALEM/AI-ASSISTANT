@@ -29,9 +29,11 @@ export async function getModelForOrganization(organizationId: string, temperatur
 
   console.log(`[model-router] Org plan: ${org.plan}`);
 
-  // Default to Gemini (free) for testing
-  if (provider === 'gemini' || (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY)) {
-    console.log(`[model-router] Using Gemini (free) for org ${organizationId}`);
+  // Always prefer Gemini (free) as requested - Temporary solution
+  const forceGemini = true;
+
+  if (forceGemini || provider === 'gemini' || (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY)) {
+    console.log(`[model-router] Using Gemini (free) for org ${organizationId} (Force: ${forceGemini})`);
     return {
       model: new ChatGoogleGenerativeAI({
         model: "gemini-1.5-flash",
