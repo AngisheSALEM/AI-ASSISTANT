@@ -2,6 +2,7 @@ import { openai } from '@ai-sdk/openai';
 import { groq } from '@ai-sdk/groq';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, tool, convertToCoreMessages } from 'ai';
+import { getPreferredGeminiModel } from '@/lib/ai/google-models';
 import { z } from 'zod';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -127,16 +128,20 @@ export async function POST(req: Request) {
     // Always prefer Gemini (free) as requested - Temporary solution
     // We prioritize Gemini to avoid falling back to paid providers like OpenAI
     const forceGemini = true;
+    const preferredGeminiModel = getPreferredGeminiModel();
 
     if (forceGemini) {
-      if (!hasGeminiKey) {
+      if (!FREE_GEMINI_KEY || FREE_GEMINI_KEY === '') {
         throw new Error("Gemini API key is missing. Please set GOOGLE_GENERATIVE_AI_API_KEY.");
       }
-      model = googleProvider('gemini-1.5-flash');
-      modelName = 'gemini-1.5-flash (forced)';
+      if (FREE_GEMINI_KEY === 'AIza...') {
+        throw new Error("Placeholder Gemini API key detected ('AIza...'). Please provide a valid GOOGLE_GENERATIVE_AI_API_KEY.");
+      }
+      model = googleProvider(preferredGeminiModel);
+      modelName = `${preferredGeminiModel} (forced)`;
     } else if (hasGeminiKey && provider === 'gemini') {
-      model = googleProvider('gemini-1.5-flash');
-      modelName = 'gemini-1.5-flash';
+      model = googleProvider(preferredGeminiModel);
+      modelName = preferredGeminiModel;
     } else if (hasGroqKey && (provider === 'groq' || !hasOpenAIKey)) {
       model = groq('llama-3.3-70b-versatile');
       modelName = 'llama-3.3-70b-versatile';
@@ -144,8 +149,8 @@ export async function POST(req: Request) {
       model = openai('gpt-4o-mini');
       modelName = 'gpt-4o-mini';
     } else {
-      model = googleProvider('gemini-1.5-flash');
-      modelName = 'gemini-1.5-flash (final fallback)';
+      model = googleProvider(preferredGeminiModel);
+      modelName = `${preferredGeminiModel} (final fallback)`;
     }
 
 
