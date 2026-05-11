@@ -139,13 +139,21 @@ export async function POST(
 
     // 7. Generate Text
     const cleanHistoryMessages = historyMessages.map(({ role, content }: any) => ({ role, content }));
-    const { text, toolResults } = await generateText({
+    console.log('Calling generateText for agent...');
+    const { text, toolResults, finishReason, usage } = await generateText({
       model: model as any,
       messages: cleanHistoryMessages.length > 0
         ? convertToCoreMessages(cleanHistoryMessages)
         : [{ role: 'user', content: message }],
       system: augmentedSystemPrompt,
       tools,
+    });
+
+    console.log('generateText completed for agent', {
+      textLength: text?.length,
+      toolResultsCount: toolResults?.length,
+      finishReason,
+      usage
     });
 
     // Save assistant response via Inngest

@@ -161,7 +161,7 @@ export async function POST(req: Request) {
     console.log('Starting generateText with model:', modelName);
 
     console.log('Calling generateText...');
-    const { text, toolResults } = await generateText({
+    const { text, toolResults, finishReason, usage } = await generateText({
       model: model as any,
       messages: convertToCoreMessages(normalizedMessages),
       system: `Tu es "Opere Copilot", un assistant intelligent pour les entreprises.
@@ -230,7 +230,9 @@ export async function POST(req: Request) {
 
     console.log('generateText completed', {
       textLength: text?.length,
-      toolResultsCount: toolResults?.length
+      toolResultsCount: toolResults?.length,
+      finishReason,
+      usage
     });
 
     const uiToolResult = toolResults?.find(r =>
