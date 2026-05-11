@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat, type Message } from "ai/react";
+import { type Message } from "ai";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -65,10 +65,40 @@ export default function CopilotPage() {
   const [apiKey, setApiKey] = useState("");
   const [savedKeys, setSavedKeys] = useState<Record<string, boolean>>({});
 
-  const { messages, input, handleInputChange, handleSubmit, append, isLoading, setMessages } = useChat({
-    api: '/api/chat',
-    body: { conversationId, provider: selectedProvider },
-    onResponse: (response) => {
+  const [messages, setMessages] = useState<UIMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const append = async (message: Message | { role: string; content: string }) => {
+    const userMessage: UIMessage = {
+      id: Date.now().toString(),
+      role: message.role as any,
+      content: message.content,
+    };
+
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: updatedMessages,
+          conversationId,
+          provider: selectedProvider
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch");
+
+      const data = await response.json();
+
       const id = response.headers.get('x-conversation-id');
       if (id && !conversationId) {
         setConversationId(id);
@@ -76,8 +106,37 @@ export default function CopilotPage() {
           localStorage.setItem('copilot_conversation_id', id);
         }
       }
-    },
-  });
+
+      const assistantMessage: UIMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.text || "",
+        uiType: data.uiType,
+        uiData: data.uiData,
+        toolInvocations: data.toolResults?.map((tr: any) => ({
+          state: 'result',
+          toolCallId: tr.toolCallId,
+          toolName: tr.toolName,
+          args: tr.args,
+          result: tr.result
+        }))
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    const content = input;
+    setInput("");
+    append({ role: 'user', content });
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

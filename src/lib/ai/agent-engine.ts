@@ -38,7 +38,6 @@ export function getAgentModel(temperature: number = 0.7) {
       model: "llama-3.3-70b-versatile",
       temperature,
       apiKey: process.env.GROQ_API_KEY,
-      streaming: true,
     });
   }
 
@@ -46,7 +45,6 @@ export function getAgentModel(temperature: number = 0.7) {
     return new ChatOpenAI({
       modelName: "gpt-4o",
       temperature,
-      streaming: true,
     });
   }
 
