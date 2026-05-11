@@ -1,7 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { groq } from '@ai-sdk/groq';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { streamText, tool, convertToCoreMessages } from 'ai';
+import { generateText, tool, convertToCoreMessages } from 'ai';
 import { getPreferredGeminiModel } from '@/lib/ai/google-models';
 import { z } from 'zod';
 import { getServerSession } from "next-auth";
@@ -9,6 +9,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Plan } from "@prisma/client";
 import { inngest } from "@/lib/inngest/client";
+import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;
 export const runtime = 'nodejs';
@@ -157,10 +158,10 @@ export async function POST(req: Request) {
     }
 
 
-    console.log('Starting streamText with model:', modelName);
+    console.log('Starting generateText with model:', modelName);
 
-    console.log('Calling streamText...');
-    const result = await streamText({
+    console.log('Calling generateText...');
+    const { text, toolResults } = await generateText({
       model: model as any,
       messages: convertToCoreMessages(normalizedMessages),
       system: `Tu es "Opere Copilot", un assistant intelligent pour les entreprises.
@@ -225,40 +226,44 @@ export async function POST(req: Request) {
           },
         }),
       },
-      onFinish: async ({ text, toolResults }) => {
-        console.log('streamText onFinish triggered', {
-          textLength: text?.length,
-          toolResultsCount: toolResults?.length
-        });
-
-        try {
-          const uiToolResult = toolResults?.find(r =>
-            ['request_agent_selection', 'request_whatsapp_credentials', 'show_insight_report'].includes(r.toolName)
-          );
-
-          console.log('Sending assistant message to Inngest for background saving...');
-          await inngest.send({
-            name: 'chat/message.save',
-            data: {
-              role: 'assistant',
-              content: text || null,
-              conversationId,
-              uiType: uiToolResult ? (uiToolResult.result as { ui: string }).ui : null,
-              uiData: uiToolResult ? (uiToolResult.result as any) : null,
-            }
-          });
-          console.log('Assistant message event sent to Inngest');
-        } catch (error) {
-          console.error('Failed to send assistant message event to Inngest:', error);
-        }
-      },
     });
 
-    return result.toDataStreamResponse({
+    console.log('generateText completed', {
+      textLength: text?.length,
+      toolResultsCount: toolResults?.length
+    });
+
+    const uiToolResult = toolResults?.find(r =>
+      ['request_agent_selection', 'request_whatsapp_credentials', 'show_insight_report'].includes(r.toolName)
+    );
+
+    try {
+      console.log('Sending assistant message to Inngest for background saving...');
+      await inngest.send({
+        name: 'chat/message.save',
+        data: {
+          role: 'assistant',
+          content: text || null,
+          conversationId,
+          uiType: uiToolResult ? (uiToolResult.result as { ui: string }).ui : null,
+          uiData: uiToolResult ? (uiToolResult.result as any) : null,
+        }
+      });
+      console.log('Assistant message event sent to Inngest');
+    } catch (error) {
+      console.error('Failed to send assistant message event to Inngest:', error);
+    }
+
+    return NextResponse.json({
+      text,
+      toolResults,
+      conversationId,
+      uiType: uiToolResult ? (uiToolResult.result as { ui: string }).ui : null,
+      uiData: uiToolResult ? (uiToolResult.result as any) : null,
+    }, {
       headers: {
         'x-conversation-id': String(conversationId),
         'x-model': modelName,
-        'Cache-Control': 'no-cache',
       }
     });
   } catch (error: any) {

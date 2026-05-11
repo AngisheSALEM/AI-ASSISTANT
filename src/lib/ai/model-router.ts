@@ -64,7 +64,6 @@ export async function getModelForOrganization(organizationId: string, temperatur
         model: "llama-3.3-70b-versatile",
         temperature,
         apiKey: process.env.GROQ_API_KEY,
-        streaming: true,
       }),
       provider: 'groq',
       cost: CREDIT_COSTS.GROQ_TEXT,
@@ -78,7 +77,6 @@ export async function getModelForOrganization(organizationId: string, temperatur
       model: new ChatOpenAI({
         modelName: org.plan === Plan.PREMIUM ? "gpt-4o" : "gpt-4o-mini",
         temperature,
-        streaming: true,
       }),
       provider: 'openai',
       cost: CREDIT_COSTS.OPENAI_TEXT,

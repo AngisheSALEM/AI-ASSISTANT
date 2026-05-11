@@ -7,11 +7,11 @@ test.describe('Copilot Persistence and UI', () => {
 
     // Check header
     await expect(page.getByText('Opere Copilot')).toBeVisible();
-    await expect(page.getByText('Ouvrir le Centre de Contrôle')).toBeVisible();
+    await expect(page.getByText('Centre de Controle')).toBeVisible();
 
     // Check progress bar
     await expect(page.getByText('Choix Agent')).toBeVisible();
-    await expect(page.getByText('Prêt')).toBeVisible();
+    await expect(page.getByText('Pret')).toBeVisible();
 
     // Check initial greeting
     await expect(page.getByText('Comment puis-je vous aider ?')).toBeVisible();

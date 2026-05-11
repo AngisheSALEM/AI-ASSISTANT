@@ -4,7 +4,7 @@ import { hasEnoughCredits, deductCredits } from "@/lib/auth/check-credits";
 import { similaritySearch } from "@/lib/ai/vector-store";
 import { getPreferredGeminiModel } from "@/lib/ai/google-models";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { streamText, tool, convertToCoreMessages } from "ai";
+import { generateText, tool, convertToCoreMessages } from "ai";
 import { z } from "zod";
 import { inngest } from "@/lib/inngest/client";
 
@@ -137,34 +137,37 @@ export async function POST(
       Si tu ne connais pas la réponse, dis-le poliment.
     `;
 
-    // 7. Start Streaming
+    // 7. Generate Text
     const cleanHistoryMessages = historyMessages.map(({ role, content }: any) => ({ role, content }));
-    const result = await streamText({
+    const { text, toolResults } = await generateText({
       model: model as any,
       messages: cleanHistoryMessages.length > 0
         ? convertToCoreMessages(cleanHistoryMessages)
         : [{ role: 'user', content: message }],
       system: augmentedSystemPrompt,
       tools,
-      onFinish: async ({ text }) => {
-        // Save assistant response via Inngest
-        try {
-          await inngest.send({
-            name: "chat/message.save",
-            data: {
-              content: text,
-              role: "assistant",
-              conversationId: currentConversationId,
-            },
-          });
-          await deductCredits(agent.organizationId, cost);
-        } catch (e) {
-          console.error("Error sending assistant message to Inngest:", e);
-        }
-      },
     });
 
-    return result.toDataStreamResponse({
+    // Save assistant response via Inngest
+    try {
+      await inngest.send({
+        name: "chat/message.save",
+        data: {
+          content: text,
+          role: "assistant",
+          conversationId: currentConversationId,
+        },
+      });
+      await deductCredits(agent.organizationId, cost);
+    } catch (e) {
+      console.error("Error sending assistant message to Inngest:", e);
+    }
+
+    return NextResponse.json({
+      text,
+      toolResults,
+      conversationId: currentConversationId,
+    }, {
       headers: {
         "X-Conversation-Id": String(currentConversationId),
       },
