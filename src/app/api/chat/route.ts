@@ -167,6 +167,8 @@ export async function POST(req: Request) {
       system: `Tu es "Opere Copilot", un assistant intelligent pour les entreprises.
       Ton role est d'aider l'utilisateur a configurer et gerer ses agents IA.
 
+      IMPORTANT: Tu dois TOUJOURS fournir une réponse textuelle claire et utile, même si tu utilises un outil. Ne renvoie jamais une réponse vide.
+
       Tu peux utiliser des outils pour afficher des interfaces specifiques :
       - Utilisez request_agent_selection pour permettre a l'utilisateur de choisir un type d'agent (Support, Vente, etc.).
       - Utilisez request_whatsapp_credentials quand l'utilisateur veut configurer son integration WhatsApp.
@@ -229,11 +231,18 @@ export async function POST(req: Request) {
     });
 
     console.log('generateText completed', {
+      text: text || '(empty)',
       textLength: text?.length,
       toolResultsCount: toolResults?.length,
       finishReason,
       usage
     });
+
+    let finalAssistantText = text;
+    if (!finalAssistantText && (!toolResults || toolResults.length === 0)) {
+        console.warn('Empty response from AI and no tools called. Using fallback response.');
+        finalAssistantText = "Je suis là pour vous aider. Comment puis-je vous assister aujourd'hui ?";
+    }
 
     const uiToolResult = toolResults?.find(r =>
       ['request_agent_selection', 'request_whatsapp_credentials', 'show_insight_report'].includes(r.toolName)
@@ -245,7 +254,7 @@ export async function POST(req: Request) {
         name: 'chat/message.save',
         data: {
           role: 'assistant',
-          content: text || null,
+          content: finalAssistantText || null,
           conversationId,
           uiType: uiToolResult ? (uiToolResult.result as { ui: string }).ui : null,
           uiData: uiToolResult ? (uiToolResult.result as any) : null,
@@ -257,7 +266,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      text,
+      text: finalAssistantText,
       toolResults,
       conversationId,
       uiType: uiToolResult ? (uiToolResult.result as { ui: string }).ui : null,

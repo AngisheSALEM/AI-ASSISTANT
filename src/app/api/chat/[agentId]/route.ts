@@ -113,7 +113,7 @@ export async function POST(
         }
         if (integration.type === 'WHATSAPP') {
             tools.send_whatsapp_message = tool({
-                description: "Envoie un message WhatsApp à un numéro spécifié.",
+                description: "Envoie une message WhatsApp à un numéro spécifié.",
                 parameters: z.object({
                     phoneNumber: z.string().describe("Le numéro de téléphone au format international."),
                     text: z.string().describe("Le contenu du message."),
@@ -135,6 +135,7 @@ export async function POST(
       INSTRUCTIONS:
       Réponds à l'utilisateur en utilisant le contexte ci-dessus si pertinent.
       Si tu ne connais pas la réponse, dis-le poliment.
+      IMPORTANT: Tu dois TOUJOURS fournir une réponse textuelle claire et utile. Ne renvoie jamais une réponse vide.
     `;
 
     // 7. Generate Text
@@ -150,18 +151,25 @@ export async function POST(
     });
 
     console.log('generateText completed for agent', {
+      text: text || '(empty)',
       textLength: text?.length,
       toolResultsCount: toolResults?.length,
       finishReason,
       usage
     });
 
+    let finalAssistantText = text;
+    if (!finalAssistantText && (!toolResults || toolResults.length === 0)) {
+        console.warn('Empty response from AI and no tools called. Using fallback response.');
+        finalAssistantText = "Je suis désolé, je n'ai pas pu générer de réponse. Comment puis-je vous aider autrement ?";
+    }
+
     // Save assistant response via Inngest
     try {
       await inngest.send({
         name: "chat/message.save",
         data: {
-          content: text,
+          content: finalAssistantText || null,
           role: "assistant",
           conversationId: currentConversationId,
         },
@@ -172,12 +180,13 @@ export async function POST(
     }
 
     return NextResponse.json({
-      text,
+      text: finalAssistantText,
       toolResults,
       conversationId: currentConversationId,
     }, {
       headers: {
         "X-Conversation-Id": String(currentConversationId),
+        "X-Model": preferredGeminiModel,
       },
     });
 
