@@ -135,7 +135,7 @@ export async function POST(
       INSTRUCTIONS:
       Réponds à l'utilisateur en utilisant le contexte ci-dessus si pertinent.
       Si tu ne connais pas la réponse, dis-le poliment.
-      IMPORTANT: Tu dois TOUJOURS fournir une réponse textuelle claire et utile. Ne renvoie jamais une réponse vide.
+      IMPORTANT: Tu dois TOUJOURS fournir une réponse textuelle non vide, claire et utile. Si tu appelles un outil, fournis aussi un résumé ou du contexte en texte. Ne renvoie jamais une réponse vide.
     `;
 
     // 7. Generate Text
@@ -160,7 +160,11 @@ export async function POST(
 
     let finalAssistantText = text;
     if (!finalAssistantText && (!toolResults || toolResults.length === 0)) {
-        console.warn('Empty response from AI and no tools called. Using fallback response.');
+        console.warn('Empty response from AI and no tools called. Using fallback response.', {
+          model: preferredGeminiModel,
+          finishReason,
+          usage: usage ? { ...usage } : 'none'
+        });
         finalAssistantText = "Je suis désolé, je n'ai pas pu générer de réponse. Comment puis-je vous aider autrement ?";
     }
 
