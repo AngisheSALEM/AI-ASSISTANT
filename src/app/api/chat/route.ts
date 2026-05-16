@@ -77,8 +77,10 @@ export async function POST(req: Request) {
     const normalizedMessages = rawMessages.map((m: any) => ({
       role: (m.role?.toLowerCase() ?? 'user') as 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool',
       content: m.content ?? "",
+      toolInvocations: m.toolInvocations,
     }));
     console.log('Normalized messages count:', normalizedMessages.length);
+    console.log('FULL MESSAGES PAYLOAD:', JSON.stringify(normalizedMessages, null, 2));
 
     let conversationId = requestedConversationId;
     if (conversationId) {
@@ -164,20 +166,23 @@ export async function POST(req: Request) {
     const { text, toolResults, finishReason, usage } = await generateText({
       model: model as any,
       messages: convertToCoreMessages(normalizedMessages),
-      system: `Tu es "Opere Copilot", un assistant intelligent pour les entreprises.
-      Ton role est d'aider l'utilisateur a configurer et gerer ses agents IA.
+      system: `Tu es "Opere Copilot", l'expert d'onboarding d'Opere. Ton objectif est d'aider l'utilisateur à créer son premier agent IA.
 
-      IMPORTANT: Tu dois TOUJOURS fournir une réponse textuelle claire et utile, même si tu utilises un outil. Ne renvoie jamais une réponse vide.
+      CONTEXTE DE FLUX :
+      L'onboarding suit ces étapes :
+      1. CHOIX AGENT (Etape actuelle si aucun agent n'est choisi) -> Tu dois appeler 'request_agent_selection'.
+      2. CONFIGURATION -> Une fois l'agent choisi, demande les détails (nom, ton, etc.).
+      3. CONNEXION -> Propose de connecter WhatsApp via 'request_whatsapp_credentials'.
 
-      Tu peux utiliser des outils pour afficher des interfaces specifiques :
-      - Utilisez request_agent_selection pour permettre a l'utilisateur de choisir un type d'agent (Support, Vente, etc.).
-      - Utilisez request_whatsapp_credentials quand l'utilisateur veut configurer son integration WhatsApp.
-      - Utilisez show_insight_report pour afficher un rapport d'activite avec les KPIs.
-
-      Reponds de maniere professionnelle et concise. Sois amical et serviable.`,
+      INSTRUCTIONS CRITIQUES :
+      - Si l'utilisateur exprime le souhait de créer ou configurer un agent, appelle IMMÉDIATEMENT 'request_agent_selection'.
+      - Ne te contente pas de dire que tu es là pour aider. AGIS en appelant les outils appropriés.
+      - TOUJOURS fournir un texte d'accompagnement explicatif avec chaque appel d'outil.
+      - Ne jamais renvoyer une réponse vide.
+      - Si l'utilisateur semble perdu, guide-le vers l'étape suivante du flux.`,
       tools: {
         request_agent_selection: tool({
-          description: 'Affiche l\'interface de selection du type d\'agent.',
+          description: "Affiche l'interface de selection du type d'agent.",
           parameters: z.object({
             message: z.string().optional().describe('Un message optionnel a afficher au-dessus de la selection.'),
           }),
@@ -205,7 +210,7 @@ export async function POST(req: Request) {
           },
         }),
         request_whatsapp_credentials: tool({
-          description: 'Affiche le formulaire de configuration des identifiants WhatsApp.',
+          description: "Affiche le formulaire de configuration des identifiants WhatsApp.",
           parameters: z.object({
             message: z.string().optional().describe('Un message optionnel a afficher au-dessus du formulaire.'),
           }),
@@ -215,7 +220,7 @@ export async function POST(req: Request) {
           },
         }),
         show_insight_report: tool({
-          description: 'Affiche un rapport d\'activite avec les KPIs.',
+          description: "Affiche un rapport d'activite avec les KPIs.",
           parameters: z.object({
             interactions: z.number(),
             resolutionRate: z.number(),
@@ -230,6 +235,7 @@ export async function POST(req: Request) {
       },
     });
 
+    console.log('RAW AI RESPONSE:', { text, toolResults, finishReason });
     console.log('generateText completed', {
       text: text || '(empty)',
       textLength: text?.length,
