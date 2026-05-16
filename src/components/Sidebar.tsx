@@ -202,7 +202,7 @@ export default function Sidebar({ orgId }: SidebarProps) {
       </nav>
 
       {/* Bottom Section */}
-      <div className={cn("p-4 mt-auto space-y-4", isCollapsed && "px-2")}>
+      <div className={cn("p-4 mt-auto space-y-6", isCollapsed && "px-2")}>
         {/* Credits & Plan */}
         <AnimatePresence>
           {orgData && !isCollapsed && (
@@ -243,14 +243,12 @@ export default function Sidebar({ orgId }: SidebarProps) {
         </AnimatePresence>
 
         {/* WhatsApp CTA Button - Primary Action */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Link 
-            href={`/${orgId}/integrations?setup=whatsapp`}
+        <Link href={`/${orgId}/integrations?setup=whatsapp`}>
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             className={cn(
-              "flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all",
+              "flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all cursor-pointer",
               "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700",
               "text-white shadow-lg shadow-emerald-500/25",
               isCollapsed && "px-3"
@@ -269,8 +267,8 @@ export default function Sidebar({ orgId }: SidebarProps) {
                 </motion.span>
               )}
             </AnimatePresence>
-          </Link>
-        </motion.div>
+          </motion.div>
+        </Link>
 
         {/* New Agent Button */}
         <Link href={`/${orgId}/marketplace`}>
