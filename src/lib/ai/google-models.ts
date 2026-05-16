@@ -5,8 +5,7 @@
 
 export const GEMINI_MODELS = [
   'gemini-3.1-flash-lite',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'gemini-3',
 ] as const;
 
 export type GeminiModel = typeof GEMINI_MODELS[number];

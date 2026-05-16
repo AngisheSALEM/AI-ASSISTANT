@@ -178,6 +178,7 @@ export async function POST(req: Request) {
       - Si l'utilisateur exprime le souhait de créer ou configurer un agent, appelle IMMÉDIATEMENT 'request_agent_selection'.
       - Ne te contente pas de dire que tu es là pour aider. AGIS en appelant les outils appropriés.
       - TOUJOURS fournir un texte d'accompagnement explicatif avec chaque appel d'outil.
+      - Tu dois TOUJOURS fournir une réponse textuelle non vide. Si tu appelles un outil, fournis aussi un résumé ou du contexte en texte.
       - Ne jamais renvoyer une réponse vide.
       - Si l'utilisateur semble perdu, guide-le vers l'étape suivante du flux.`,
       tools: {
@@ -246,7 +247,11 @@ export async function POST(req: Request) {
 
     let finalAssistantText = text;
     if (!finalAssistantText && (!toolResults || toolResults.length === 0)) {
-        console.warn('Empty response from AI and no tools called. Using fallback response.');
+        console.warn('Empty response from AI and no tools called. Using fallback response.', {
+          model: modelName,
+          finishReason,
+          usage: usage ? { ...usage } : 'none'
+        });
         finalAssistantText = "Je suis là pour vous aider. Comment puis-je vous assister aujourd'hui ?";
     }
 
