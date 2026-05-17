@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { PageTransition } from "@/components/ui/PageTransition";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
@@ -48,7 +47,7 @@ export default function RootLayout({
               <div className="glow-circle glow-blue" />
               <div className="glow-circle glow-emerald" />
             </div>
-            <PageTransition>{children}</PageTransition>
+            {children}
           </AuthProvider>
         </ThemeProvider>
       </body>

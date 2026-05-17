@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import {
   MessageSquare,
   TrendingUp,
@@ -16,7 +18,7 @@ import {
   Cpu,
   Zap,
 } from "lucide-react";
-import { Badge, Flex, ProgressBar, Text } from "@/components/ui/TremorComponents";
+import { Badge } from "@/components/ui/TremorComponents";
 import Link from "next/link";
 import { DashboardAreaChart } from "@/components/dashboard/DashboardCharts";
 import { AgentStatusCard } from "@/components/dashboard/AgentStatusCard";
@@ -25,107 +27,64 @@ import { GlassCard } from "@/components/dashboard/GlassCard";
 import { LiveFeed } from "@/components/dashboard/LiveFeed";
 import { WhatsAppFloatingButton } from "@/components/dashboard/WhatsAppFloatingButton";
 
-export default async function DashboardPage({
+export default function DashboardPage({
   params,
 }: {
   params: { orgId: string };
 }) {
   const { orgId } = params;
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch Organization details
-  const organization = await prisma.organization.findUnique({
-    where: { id: orgId },
-  });
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        const res = await fetch(`/api/dashboard/${orgId}`);
+        if (res.ok) {
+          const dashboardData = await res.json();
+          setData(dashboardData);
+        }
+      } catch (err) {
+        console.error("Failed to fetch dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboardData();
+  }, [orgId]);
 
-  if (!organization) {
-    return <div>Organisation non trouvee</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+          <Bot className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-cyan-500" size={20} />
+        </div>
+      </div>
+    );
   }
 
-  // Fetch real stats
-  const agentCount = await prisma.agent.count({
-    where: { organizationId: orgId },
-  });
+  if (!data || !data.organization) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-text-primary dark:text-white">Organisation non trouvée</h2>
+        <p className="text-text-secondary dark:text-white/50 mt-2">Désolé, nous n'avons pas pu charger les données.</p>
+        <Link href="/" className="mt-6 inline-block text-cyan-500 hover:underline">Retour à l'accueil</Link>
+      </div>
+    );
+  }
 
-  const totalMessages = await prisma.message.count({
-    where: {
-      conversation: {
-        agent: {
-          organizationId: orgId,
-        },
-      },
-    },
-  });
-
-  // Fetch active agents with their stats
-  const agents = await prisma.agent.findMany({
-    where: { organizationId: orgId },
-    include: {
-      _count: {
-        select: {
-          conversations: true,
-        },
-      },
-      template: true,
-    },
-    take: 4,
-  });
-
-  // Fetch skills count
-  const skillsCount = await prisma.skill.count({
-    where: { organizationId: orgId },
-  });
-
-  // Simulated metrics
-  const resolutionRate = totalMessages > 0 ? 88 : 0;
-  const hoursSaved = Math.round(totalMessages * 0.15);
-
-  // Data for AreaChart
-  const chartData = await Promise.all(
-    Array.from({ length: 7 }).map(async (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const count = await prisma.message.count({
-        where: {
-          conversation: {
-            agent: {
-              organizationId: orgId,
-            },
-          },
-          createdAt: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-      });
-
-      return {
-        date: date.toLocaleDateString("fr-FR", {
-          day: "2-digit",
-          month: "short",
-        }),
-        "Messages": count,
-      };
-    })
-  );
-
-  // Fetch Daily Reports
-  const dailyReports = await prisma.dailyReport.findMany({
-    where: {
-      agent: {
-        organizationId: orgId
-      }
-    },
-    orderBy: { date: 'desc' },
-    include: { agent: true },
-    take: 3
-  });
+  const {
+    organization,
+    agentCount,
+    totalMessages,
+    agents,
+    skillsCount,
+    chartData,
+    dailyReports,
+    resolutionRate,
+    hoursSaved
+  } = data;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
@@ -152,61 +111,54 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      {/* Hero Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-text-secondary dark:text-white/40">
-            Dashboard
-          </p>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary dark:text-white font-fraunces">
-            Bienvenue, {organization.name}
-          </h1>
-          <p className="text-text-secondary dark:text-white/50 text-sm">
-            Voici un apercu de vos agents IA et de leurs performances.
+          <h2 className="text-3xl font-bold text-text-primary dark:text-white tracking-tight font-fraunces">
+            Bonjour, {organization.name}
+          </h2>
+          <p className="text-text-secondary dark:text-white/50">
+            Voici un aperçu de la performance de vos agents aujourd&apos;hui.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 glass-card">
-            <div className="relative">
-              <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-30" />
-              <span className="relative block w-2 h-2 rounded-full bg-emerald-500" />
-            </div>
-            <span className="text-xs font-medium text-text-secondary dark:text-white/60">
-              {agentCount} agents actifs
-            </span>
+
+        <div className="flex items-center gap-3 p-1 bg-black/5 dark:bg-white/5 rounded-xl self-start md:self-auto">
+          <div className="px-4 py-2 bg-white dark:bg-white/10 rounded-lg shadow-sm border border-black/5 dark:border-white/10">
+            <span className="text-xs font-bold text-text-primary dark:text-white">7 derniers jours</span>
+          </div>
+          <div className="px-4 py-2 text-xs font-medium text-text-secondary dark:text-white/40 cursor-not-allowed">
+            Mois
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
-          title="Total Interactions"
+          title="Messages Total"
           value={totalMessages}
-          icon="MessageSquare"
-          iconColor="text-cyan-500"
+          icon={MessageSquare}
           trend="+12%"
-          trendLabel="ce mois"
+          trendLabel="vs hier"
         />
         <StatsCard
-          title="Taux Resolution"
+          title="Taux de Resolution"
           value={`${resolutionRate}%`}
-          icon="TrendingUp"
+          icon={TrendingUp}
           iconColor="text-emerald-500"
           progress={resolutionRate}
-          subtitle="Sans intervention humaine"
         />
         <StatsCard
-          title="Temps Economise"
+          title="Temps Gagne"
           value={`${hoursSaved}h`}
-          icon="Clock"
+          icon={Clock}
           iconColor="text-blue-500"
-          subtitle="Ce mois-ci"
+          subtitle="Approx. 9 min / msg"
         />
         <StatsCard
           title="Credits Restants"
           value={organization.credits}
-          icon="Coins"
+          icon={Coins}
           iconColor="text-amber-500"
           linkHref={`/${orgId}/billing`}
           linkLabel="Recharger"
@@ -340,7 +292,7 @@ export default async function DashboardPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {agents.map((agent) => (
+              {agents.map((agent: any) => (
                 <AgentStatusCard
                   key={agent.id}
                   agent={agent}
@@ -370,7 +322,7 @@ export default async function DashboardPage({
             </div>
           ) : (
             <div className="space-y-3">
-              {dailyReports.map((report) => (
+              {dailyReports.map((report: any) => (
                 <div
                   key={report.id}
                   className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] space-y-2"
