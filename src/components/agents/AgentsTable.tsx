@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Table,
   TableHead,
@@ -10,8 +11,10 @@ import {
   Badge,
   Button
 } from "@/components/ui/TremorComponents";
-import { Settings, BookOpen } from "lucide-react";
+import { Settings, BookOpen, Play } from "lucide-react";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
+import { Modal } from "@/components/ui/Modal";
+import { AgentRunner } from "@/components/agents/AgentRunner";
 
 interface Agent {
   id: string;
@@ -23,44 +26,72 @@ interface Agent {
 
 interface AgentsTableProps {
   agents: Agent[];
+  orgId: string;
 }
 
-export function AgentsTable({ agents }: AgentsTableProps) {
+export function AgentsTable({ agents, orgId }: AgentsTableProps) {
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+
   return (
-    <PremiumGlassCard className="p-4">
-      <Table>
-        <TableHead>
-          <TableRow className="border-black/5 dark:border-white/5">
-            <TableHeaderCell className="text-text-primary dark:text-white/70">Nom</TableHeaderCell>
-            <TableHeaderCell className="text-text-primary dark:text-white/70">Rôle / Métier</TableHeaderCell>
-            <TableHeaderCell className="text-text-primary dark:text-white/70">Statut</TableHeaderCell>
-            <TableHeaderCell className="text-text-primary dark:text-white/70">Date de recrutement</TableHeaderCell>
-            <TableHeaderCell className="text-right text-text-primary dark:text-white/70">Actions</TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {agents.map((agent) => (
-            <TableRow key={agent.id} className="border-black/5 dark:border-white/5">
-              <TableCell className="font-medium text-text-primary dark:text-white">{agent.name}</TableCell>
-              <TableCell className="text-text-secondary dark:text-white/60">{agent.role}</TableCell>
-              <TableCell>
-                <Badge color={agent.status === "ACTIVE" ? "green" : "red"}>
-                  {agent.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-text-secondary dark:text-white/60">{new Date(agent.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button size="xs" variant="secondary" icon={Settings}>
-                  Configurer
-                </Button>
-                <Button size="xs" variant="secondary" icon={BookOpen}>
-                  Connaissances
-                </Button>
-              </TableCell>
+    <>
+      <PremiumGlassCard className="p-4">
+        <Table>
+          <TableHead>
+            <TableRow className="border-black/5 dark:border-white/5">
+              <TableHeaderCell className="text-text-primary dark:text-white/70">Nom</TableHeaderCell>
+              <TableHeaderCell className="text-text-primary dark:text-white/70">Rôle / Métier</TableHeaderCell>
+              <TableHeaderCell className="text-text-primary dark:text-white/70">Statut</TableHeaderCell>
+              <TableHeaderCell className="text-text-primary dark:text-white/70">Date de recrutement</TableHeaderCell>
+              <TableHeaderCell className="text-right text-text-primary dark:text-white/70">Actions</TableHeaderCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </PremiumGlassCard>
+          </TableHead>
+          <TableBody>
+            {agents.map((agent) => (
+              <TableRow key={agent.id} className="border-black/5 dark:border-white/5">
+                <TableCell className="font-medium text-text-primary dark:text-white">{agent.name}</TableCell>
+                <TableCell className="text-text-secondary dark:text-white/60">{agent.role}</TableCell>
+                <TableCell>
+                  <Badge color={agent.status === "ACTIVE" ? "green" : "red"}>
+                    {agent.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-text-secondary dark:text-white/60">{new Date(agent.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button
+                    size="xs"
+                    variant="primary"
+                    color="cyan"
+                    icon={Play}
+                    onClick={() => setSelectedAgent(agent)}
+                    disabled={agent.status !== "ACTIVE"}
+                    className="shadow-sm shadow-cyan-500/10"
+                  >
+                    Lancer l&apos;agent
+                  </Button>
+                  <Button size="xs" variant="secondary" icon={Settings}>
+                    Configurer
+                  </Button>
+                  <Button size="xs" variant="secondary" icon={BookOpen}>
+                    Connaissances
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </PremiumGlassCard>
+
+      {/* Modal interactif contenant l'AgentRunner (A2UI) */}
+      <Modal isOpen={selectedAgent !== null} onClose={() => setSelectedAgent(null)}>
+        {selectedAgent && (
+          <AgentRunner
+            agent={selectedAgent}
+            orgId={orgId}
+            onClose={() => setSelectedAgent(null)}
+          />
+        )}
+      </Modal>
+    </>
   );
 }
+

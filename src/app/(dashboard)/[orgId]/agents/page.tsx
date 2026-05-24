@@ -26,7 +26,7 @@ export default async function AgentsPage({ params }: { params: { orgId: string }
           role: a.role,
           status: a.status,
           createdAt: a.createdAt
-        }))} />
+        }))} orgId={orgId} />
       ) : (
         <div className="space-y-8">
           <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-2xl">
