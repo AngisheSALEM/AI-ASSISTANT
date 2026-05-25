@@ -74,6 +74,7 @@ export default function Sidebar({ orgId }: SidebarProps) {
   const menuItems = [
     { name: "Overview", href: `/${orgId}`, icon: LayoutDashboard },
     { name: "My Agents", href: `/${orgId}/agents`, icon: UserSquare2 },
+    { name: "Automations", href: `/${orgId}/automations`, icon: Zap },
     { name: "Knowledge Base", href: `/${orgId}/knowledge`, icon: Database },
     { name: "Thinking Studio", href: `/${orgId}/thinking`, icon: Brain },
     { name: "Insights", href: `/${orgId}/analytics`, icon: BarChart3 },
