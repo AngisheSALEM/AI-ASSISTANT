@@ -1,0 +1,111 @@
+{
+  "name": "Kin Opere — Automatisation Reçu & A2UI Table",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "aaa11111-8742-4f35-9c95-5cb9b51fa111",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const body = $node[\"Execute Workflow Trigger\"].json.body;\nconst input = body.inputData || {};\n\nconst client = input.client || \"Client Congolais\";\nconst montant = parseFloat(input.montant || \"150000\");\nconst description = input.description || \"Prestation d'automatisation et de conseil\";\nconst tva = montant * 0.16;\nconst total = montant + tva;\nconst dateFacture = new Date().toLocaleDateString('fr-FR', {\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\nconst numFacture = \"KP-\" + Math.floor(100000 + Math.random() * 900000);\n\n// Génération d'une réponse textuelle Markdown soignée\nconst markdownResponse = `### 🧾 Reçu de Paiement Officiel — Kin Opere\\n\\n**Numéro de Facture :** ${numFacture}\\n**Date d'émission :** ${dateFacture}\\n\\n---\\n\\n* **Client :** ${client}\\n* **Désignation :** ${description}\\n* **Statut :** 🟢 **PAYÉ (1 crédit consommé)**\\n\\n---\\n\\n### 📊 Détails de Facturation\\n* **Montant HT :** ${montant.toLocaleString('fr-FR')} FC\\n* **TVA (16%) :** ${tva.toLocaleString('fr-FR')} FC\\n* **Total TTC :** ${total.toLocaleString('fr-FR')} FC\\n\\n*Merci pour votre confiance ! Nos équipes logistiques s'occupent de la livraison.*`;\n\n// Données structurées pour l'interface dynamique A2UI (Interactive Table)\nconst tableData = {\n  columns: [\"Champ\", \"Valeur\"],\n  rows: [\n    { \"Champ\": \"Facture N°\", \"Valeur\": numFacture },\n    { \"Champ\": \"Client\", \"Valeur\": client },\n    { \"Champ\": \"Montant HT\", \"Valeur\": montant.toLocaleString('fr-FR') + \" FC\" },\n    { \"Champ\": \"TVA (16%)\", \"Valeur\": tva.toLocaleString('fr-FR') + \" FC\" },\n    { \"Champ\": \"Total TTC\", \"Valeur\": total.toLocaleString('fr-FR') + \" FC\" },\n    { \"Champ\": \"Statut\", \"Valeur\": \"PAYÉ\" }\n  ]\n};\n\nreturn {\n  json: {\n    agencyId: body.agencyId,\n    agentId: body.agentId,\n    callbackUrl: body.callbackUrl,\n    markdownResponse,\n    tableData\n  }\n};"
+      },
+      "id": "bbb22222-8742-4f35-9c95-5cb9b51fa222",
+      "name": "Formater les données de Reçu",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.callbackUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": {
+          "keyVal": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": {
+          "keyVal": [
+            {
+              "name": "action",
+              "value": "SAVE_MESSAGE"
+            },
+            {
+              "name": "agencyId",
+              "value": "={{ $json.agencyId }}"
+            },
+            {
+              "name": "agentId",
+              "value": "={{ $json.agentId }}"
+            },
+            {
+              "name": "data",
+              "value": "={ \"content\": \"{{ $json.markdownResponse }}\", \"role\": \"assistant\", \"uiType\": \"table\", \"uiData\": {{ JSON.stringify($json.tableData) }} }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ccc33333-8742-4f35-9c95-5cb9b51fa333",
+      "name": "Envoi du Reçu à Next.js",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kin-opere-callback-secret-id",
+          "name": "KinOpereCallbackAuth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Formater les données de Reçu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formater les données de Reçu": {
+      "main": [
+        [
+          {
+            "node": "Envoi du Reçu à Next.js",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionTimeout": 60
+  }
+}

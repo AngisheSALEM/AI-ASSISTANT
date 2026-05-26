@@ -1,0 +1,268 @@
+{
+  "name": "Kin Opere — Routeur Principal & Auto-Remboursement",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kin-opere-router",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "180b5514-8742-4f35-9c95-5cb9b51fa18a",
+      "name": "Webhook Next.js",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1f7b055-6677-4b44-9988-cb9b51fa1234",
+              "leftValue": "={{ $json.body.isAutomation }}",
+              "rightValue": true,
+              "operator": "true"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "51f2b055-9a88-4333-a111-cb9b51fa2222",
+      "name": "Est une Automatisation ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.body.agentId }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "pdf-generator",
+              "output": 1
+            },
+            {
+              "value2": "comptable",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "id": "99f2b055-9bb9-4444-a222-cb9b51fa3333",
+      "name": "Aiguillage par AgentId",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        700,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "comptable-subworkflow-id-or-name",
+        "options": {}
+      },
+      "id": "11f2b055-c55c-4444-9999-cb9b51fa4444",
+      "name": "Appel Agent Comptable",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        950,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "pdf-generator-subworkflow-id-or-name",
+        "options": {}
+      },
+      "id": "22f2b055-d66d-4444-8888-cb9b51fa5555",
+      "name": "Appel Générateur PDF",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        950,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{\"success\": true, \"message\": \"Exécution lancée de manière asynchrone\"}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "33f2b055-e77e-4444-7777-cb9b51fa6666",
+      "name": "Réponse immédiate Next.js",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        220
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "44f2b055-f88f-4444-6666-cb9b51fa7777",
+      "name": "Capture d'Erreur Globale",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        480,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.execution.error.node.input.body.callbackUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": {
+          "keyVal": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": {
+          "keyVal": [
+            {
+              "name": "action",
+              "value": "REFUND_CREDITS"
+            },
+            {
+              "name": "agencyId",
+              "value": "={{ $json.execution.error.node.input.body.agencyId }}"
+            },
+            {
+              "name": "agentId",
+              "value": "={{ $json.execution.error.node.input.body.agentId }}"
+            },
+            {
+              "name": "data",
+              "value": "={ \"amount\": {{ $json.execution.error.node.input.body.isAutomation ? 1 : 20 }}, \"reason\": \"Échec de l'exécution du nœud [{{ $json.execution.error.node.name }}] sur n8n: {{ $json.execution.error.message }}\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "55f2b055-a99a-4444-5555-cb9b51fa8888",
+      "name": "Auto-Remboursement Next.js",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        750,
+        780
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kin-opere-callback-secret-id",
+          "name": "KinOpereCallbackAuth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Next.js": {
+      "main": [
+        [
+          {
+            "node": "Est une Automatisation ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Est une Automatisation ?": {
+      "main": [
+        [
+          {
+            "node": "Réponse immédiate Next.js",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Appel Générateur PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse immédiate Next.js",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aiguillage par AgentId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aiguillage par AgentId": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Appel Générateur PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Appel Agent Comptable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture d'Erreur Globale": {
+      "main": [
+        [
+          {
+            "node": "Auto-Remboursement Next.js",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionTimeout": 300
+  }
+}
