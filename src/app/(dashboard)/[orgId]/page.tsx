@@ -35,6 +35,21 @@ export default function DashboardPage({
   const { orgId } = params;
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isExpertMode, setIsExpertMode] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("kin_opere_expert_mode");
+    setIsExpertMode(saved === "true");
+
+    const handleSync = () => {
+      const updated = localStorage.getItem("kin_opere_expert_mode");
+      setIsExpertMode(updated === "true");
+    };
+    window.addEventListener("kin_opere_expert_mode_changed", handleSync);
+    return () => {
+      window.removeEventListener("kin_opere_expert_mode_changed", handleSync);
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -358,53 +373,57 @@ export default function DashboardPage({
       {/* Skills & Live Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Skills Overview */}
-        <GlassCard className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-text-primary dark:text-white">
-              Skills
-            </h3>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10">
-              <Cpu size={14} className="text-emerald-500" />
-            </div>
-          </div>
-
-          <div className="text-center py-6">
-            <p className="text-4xl font-bold text-text-primary dark:text-white mb-1">
-              {skillsCount}
-            </p>
-            <p className="text-xs text-text-secondary dark:text-white/40">
-              Skills configures
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {[
-              { name: "Prise de RDV", active: true },
-              { name: "FAQ Automatique", active: true },
-              { name: "Suivi Commande", active: false },
-            ].map((skill) => (
-              <div
-                key={skill.name}
-                className="flex items-center justify-between py-2 px-3 rounded-lg bg-black/[0.02] dark:bg-white/[0.02]"
-              >
-                <span className="text-xs font-medium text-text-primary dark:text-white/80">
-                  {skill.name}
-                </span>
-                <span className={`w-1.5 h-1.5 rounded-full ${skill.active ? "bg-emerald-500" : "bg-gray-400"}`} />
+        {isExpertMode && (
+          <GlassCard className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-text-primary dark:text-white">
+                Skills
+              </h3>
+              <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                <Cpu size={14} className="text-emerald-500" />
               </div>
-            ))}
-          </div>
+            </div>
 
-          <Link
-            href={`/${orgId}/thinking`}
-            className="mt-4 block text-center text-xs text-cyan-500 hover:underline"
-          >
-            Gerer les skills
-          </Link>
-        </GlassCard>
+            <div className="text-center py-6">
+              <p className="text-4xl font-bold text-text-primary dark:text-white mb-1">
+                {skillsCount}
+              </p>
+              <p className="text-xs text-text-secondary dark:text-white/40">
+                Skills configures
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                { name: "Prise de RDV", active: true },
+                { name: "FAQ Automatique", active: true },
+                { name: "Suivi Commande", active: false },
+              ].map((skill) => (
+                <div
+                  key={skill.name}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-black/[0.02] dark:bg-white/[0.02]"
+                >
+                  <span className="text-xs font-medium text-text-primary dark:text-white/80">
+                    {skill.name}
+                  </span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${skill.active ? "bg-emerald-500" : "bg-gray-400"}`} />
+                </div>
+              ))}
+            </div>
+
+            <Link
+              href={`/${orgId}/thinking`}
+              className="mt-4 block text-center text-xs text-cyan-500 hover:underline"
+            >
+              Gerer les skills
+            </Link>
+          </GlassCard>
+        )}
 
         {/* Live Feed */}
-        <LiveFeed orgId={orgId} />
+        <div className={isExpertMode ? "lg:col-span-2" : "col-span-full lg:col-span-3"}>
+          <LiveFeed orgId={orgId} />
+        </div>
       </div>
 
       {/* WhatsApp Floating Button */}

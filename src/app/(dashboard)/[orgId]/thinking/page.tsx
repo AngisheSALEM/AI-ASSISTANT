@@ -29,6 +29,21 @@ export default function ThinkingPage() {
   const [simulatedResponse, setSimulatedResponse] = useState<string | null>(null);
   const [simulationInput, setSimulationInput] = useState("");
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isExpertMode, setIsExpertMode] = useState(false);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem("kin_opere_expert_mode");
+    setIsExpertMode(saved === "true");
+
+    const handleSync = () => {
+      const updated = localStorage.getItem("kin_opere_expert_mode");
+      setIsExpertMode(updated === "true");
+    };
+    window.addEventListener("kin_opere_expert_mode_changed", handleSync);
+    return () => {
+      window.removeEventListener("kin_opere_expert_mode_changed", handleSync);
+    };
+  }, []);
 
   const applyPreset = (key: keyof typeof PROMPT_PRESETS) => {
     setPromptText(PROMPT_PRESETS[key]);
@@ -168,73 +183,77 @@ export default function ThinkingPage() {
           </PremiumGlassCard>
 
           {/* Reasoning Chains */}
-          <PremiumGlassCard className="p-6">
-            <h3 className="text-xl font-bold text-text-primary dark:text-white mb-6">Chaînes de Raisonnement</h3>
-            <div className="space-y-4">
-               {[
-                 { title: "Vérification de stock", desc: "Si le client demande un produit, vérifier d'abord la base de données.", active: true },
-                 { title: "Prise de RDV", desc: "Si le client veut un RDV, proposer les créneaux libres via Google Calendar.", active: true },
-                 { title: "Escalade Humaine", desc: "Si le client s'énerve, passer immédiatement la main à un humain.", active: false },
-               ].map((chain, i) => (
-                 <div key={i} className="p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                       <div className="p-2 bg-white dark:bg-white/10 rounded-lg shadow-sm border border-black/5 dark:border-white/5">
-                          <Brain size={20} className={chain.active ? "text-cyan-500" : "text-gray-400"} />
-                       </div>
-                       <div>
-                          <Text className="font-bold text-text-primary dark:text-white">{chain.title}</Text>
-                          <Text className="text-xs text-text-secondary dark:text-white/40">{chain.desc}</Text>
-                       </div>
-                    </div>
-                    <Badge color={chain.active ? "emerald" : "gray"}>{chain.active ? "Actif" : "Désactivé"}</Badge>
-                 </div>
-               ))}
-               <Button variant="secondary" icon={Zap} className="w-full mt-4 rounded-xl">Ajouter une logique (Flow)</Button>
-            </div>
-          </PremiumGlassCard>
+          {isExpertMode && (
+            <PremiumGlassCard className="p-6">
+              <h3 className="text-xl font-bold text-text-primary dark:text-white mb-6">Chaînes de Raisonnement</h3>
+              <div className="space-y-4">
+                 {[
+                   { title: "Vérification de stock", desc: "Si le client demande un produit, vérifier d'abord la base de données.", active: true },
+                   { title: "Prise de RDV", desc: "Si le client veut un RDV, proposer les créneaux libres via Google Calendar.", active: true },
+                   { title: "Escalade Humaine", desc: "Si le client s'énerve, passer immédiatement la main à un humain.", active: false },
+                 ].map((chain, i) => (
+                   <div key={i} className="p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                         <div className="p-2 bg-white dark:bg-white/10 rounded-lg shadow-sm border border-black/5 dark:border-white/5">
+                            <Brain size={20} className={chain.active ? "text-cyan-500" : "text-gray-400"} />
+                         </div>
+                         <div>
+                            <Text className="font-bold text-text-primary dark:text-white">{chain.title}</Text>
+                            <Text className="text-xs text-text-secondary dark:text-white/40">{chain.desc}</Text>
+                         </div>
+                      </div>
+                      <Badge color={chain.active ? "emerald" : "gray"}>{chain.active ? "Actif" : "Désactivé"}</Badge>
+                   </div>
+                 ))}
+                 <Button variant="secondary" icon={Zap} className="w-full mt-4 rounded-xl">Ajouter une logique (Flow)</Button>
+              </div>
+            </PremiumGlassCard>
+          )}
         </div>
 
         <div className="space-y-8">
           {/* Cognitive Parameters */}
-          <PremiumGlassCard className="p-6">
-            <h3 className="text-xl font-bold text-text-primary dark:text-white mb-6">Paramètres Cognitifs</h3>
-            <div className="space-y-8">
-               <div className="space-y-4">
-                  <Flex>
-                     <Text className="text-text-primary dark:text-white font-medium">Créativité (Temperature)</Text>
-                     <Badge color="cyan">0.7</Badge>
-                  </Flex>
-                  <Text className="text-xs text-text-secondary dark:text-white/40">Le niveau d&apos;improvisation ou d&apos;exactitude des réponses de l&apos;IA.</Text>
-                  <Flex>
-                     <Text className="text-[10px] uppercase tracking-widest text-gray-400">Strict</Text>
-                     <Text className="text-[10px] uppercase tracking-widest text-gray-400">Créatif</Text>
-                  </Flex>
-               </div>
+          {isExpertMode && (
+            <PremiumGlassCard className="p-6">
+              <h3 className="text-xl font-bold text-text-primary dark:text-white mb-6">Paramètres Cognitifs</h3>
+              <div className="space-y-8">
+                 <div className="space-y-4">
+                    <Flex>
+                       <Text className="text-text-primary dark:text-white font-medium">Créativité (Temperature)</Text>
+                       <Badge color="cyan">0.7</Badge>
+                    </Flex>
+                    <Text className="text-xs text-text-secondary dark:text-white/40">Le niveau d&apos;improvisation ou d&apos;exactitude des réponses de l&apos;IA.</Text>
+                    <Flex>
+                       <Text className="text-[10px] uppercase tracking-widest text-gray-400">Strict</Text>
+                       <Text className="text-[10px] uppercase tracking-widest text-gray-400">Créatif</Text>
+                    </Flex>
+                 </div>
 
-               <div className="space-y-4 pt-6 border-t border-black/5 dark:border-white/5">
-                  <Text className="text-text-primary dark:text-white font-medium">Niveau d&apos;Autonomie</Text>
-                  <div className="space-y-2">
-                     {[
-                       { label: "Strictement Factuel", id: "fact" },
-                       { label: "Semi-Autonome", id: "semi" },
-                       { label: "Agent Complet (Conseillé)", id: "full" },
-                     ].map((opt) => (
-                       <button
-                         key={opt.id}
-                         onClick={(e) => e.preventDefault()}
-                         className={`w-full text-left p-3 rounded-xl border text-sm transition-all ${
-                           opt.id === "full"
-                            ? "border-cyan-500 bg-cyan-500/5 text-cyan-600 dark:text-cyan-400"
-                            : "border-black/5 dark:border-white/5 text-text-secondary dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5"
-                         }`}
-                       >
-                         {opt.label}
-                       </button>
-                     ))}
-                  </div>
-               </div>
-            </div>
-          </PremiumGlassCard>
+                 <div className="space-y-4 pt-6 border-t border-black/5 dark:border-white/5">
+                    <Text className="text-text-primary dark:text-white font-medium">Niveau d&apos;Autonomie</Text>
+                    <div className="space-y-2">
+                       {[
+                         { label: "Strictement Factuel", id: "fact" },
+                         { label: "Semi-Autonome", id: "semi" },
+                         { label: "Agent Complet (Conseillé)", id: "full" },
+                       ].map((opt) => (
+                         <button
+                           key={opt.id}
+                           onClick={(e) => e.preventDefault()}
+                           className={`w-full text-left p-3 rounded-xl border text-sm transition-all ${
+                             opt.id === "full"
+                              ? "border-cyan-500 bg-cyan-500/5 text-cyan-600 dark:text-cyan-400"
+                              : "border-black/5 dark:border-white/5 text-text-secondary dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5"
+                           }`}
+                         >
+                           {opt.label}
+                         </button>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+            </PremiumGlassCard>
+          )}
 
           {/* Test Playground */}
           <PremiumGlassCard className="bg-zinc-900 border-none p-6 text-white">
