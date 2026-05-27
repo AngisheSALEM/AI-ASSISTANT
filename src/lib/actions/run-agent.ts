@@ -70,7 +70,16 @@ export async function runAgent({
   }
 
   try {
-    const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    // Détermination robuste de l'URL de base de l'application (Vercel Production, branch preview, NEXTAUTH_URL ou localhost)
+    let appUrl = "http://localhost:3000";
+    if (process.env.NEXT_PUBLIC_APP_URL) {
+      appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    } else if (process.env.NEXTAUTH_URL) {
+      appUrl = process.env.NEXTAUTH_URL;
+    } else if (process.env.VERCEL_URL) {
+      appUrl = `https://${process.env.VERCEL_URL}`;
+    }
+
     const callbackUrl = `${appUrl}/api/webhook/n8n-callback`;
 
     // Appel à l'instance dynamique de n8n
