@@ -1,7 +1,30 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { User, Headphones, Stethoscope, Building2, TrendingUp, Cpu } from "lucide-react";
+import {
+  User,
+  Cpu,
+  Headphones,
+  Stethoscope,
+  Building2,
+  TrendingUp,
+  Sparkles,
+  Mail,
+  Phone,
+  Search,
+  Users,
+  Code,
+  Globe,
+  Volume2,
+  Clock,
+  Layers,
+  Shield,
+  ShieldCheck,
+  DollarSign,
+  Award,
+  FileCheck,
+  Settings
+} from "lucide-react";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 import { Button } from "@/components/ui/TremorComponents";
 import { instantiateAgent } from "@/lib/actions/instantiate-agent";
@@ -12,6 +35,22 @@ const ICON_MAP: Record<string, any> = {
   Stethoscope,
   Building2,
   TrendingUp,
+  Sparkles,
+  Mail,
+  Phone,
+  Search,
+  Users,
+  Code,
+  Globe,
+  Volume2,
+  Clock,
+  Layers,
+  Shield,
+  ShieldCheck,
+  DollarSign,
+  Award,
+  FileCheck,
+  Settings
 };
 
 interface Template {

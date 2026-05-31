@@ -126,6 +126,8 @@ export async function runAgent({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Bypass-Tunnel-Reminder": "true",
+        "bypass-tunnel-reminder": "1",
       },
       body: JSON.stringify({
         agencyId: organizationId,
