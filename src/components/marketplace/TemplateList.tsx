@@ -1,7 +1,30 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { User, Cpu, Headphones, Stethoscope, Building2, TrendingUp } from "lucide-react";
+import {
+  User,
+  Cpu,
+  Headphones,
+  Stethoscope,
+  Building2,
+  TrendingUp,
+  Sparkles,
+  Mail,
+  Phone,
+  Search,
+  Users,
+  Code,
+  Globe,
+  Volume2,
+  Clock,
+  Layers,
+  Shield,
+  ShieldCheck,
+  DollarSign,
+  Award,
+  FileCheck,
+  Settings
+} from "lucide-react";
 import { RentButton } from "./rent-button";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 import { AgentTemplate } from "@/lib/types";
@@ -11,6 +34,22 @@ const iconMap: Record<string, any> = {
   Stethoscope,
   Building2,
   TrendingUp,
+  Sparkles,
+  Mail,
+  Phone,
+  Search,
+  Users,
+  Code,
+  Globe,
+  Volume2,
+  Clock,
+  Layers,
+  Shield,
+  ShieldCheck,
+  DollarSign,
+  Award,
+  FileCheck,
+  Settings
 };
 
 interface TemplateListProps {

@@ -57,7 +57,46 @@ export async function runAgent({
     };
   }
 
-  // Étape C : Appel fetch vers n8n
+  // Étape C : Récupération dynamique des paramètres de l'agent et contrôle multi-tenant strict
+  let templateId = agentId; // Par défaut pour les automatisations fixes
+  let systemPrompt = "";
+  let agentName = "";
+  let agentRole = "";
+  let temperature = 0.7;
+
+  if (!isAutomation) {
+    try {
+      const agent = await prisma.agent.findUnique({
+        where: { id: agentId },
+      });
+
+      if (!agent) {
+        throw new Error("L'agent spécifié n'existe pas en base de données.");
+      }
+
+      // SÉCURITÉ CRITIQUE : Vérification absolue du cloisonnement multi-tenant
+      if (agent.organizationId !== organizationId) {
+        throw new Error("Violation d'accès : Cet agent appartient à un autre compte d'entreprise.");
+      }
+
+      templateId = agent.templateId || "custom";
+      systemPrompt = agent.systemPrompt;
+      agentName = agent.name;
+      agentRole = agent.role;
+      temperature = agent.temperature;
+    } catch (error: any) {
+      console.error("Multi-tenant security or lookup error:", error.message);
+      // Remboursement en cas d'erreur de sécurité ou de lecture
+      await refundCredits(organizationId, requiredCredits);
+      revalidatePath(`/(dashboard)/${organizationId}`);
+      return {
+        success: false,
+        error: `Erreur d'autorisation : ${error.message || "Impossible de charger l'agent. Crédits remboursés."}`,
+      };
+    }
+  }
+
+  // Étape D : Appel fetch vers n8n
   const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
   if (!n8nWebhookUrl) {
     // Si la variable d'env n'est pas définie, on rembourse
@@ -82,7 +121,7 @@ export async function runAgent({
 
     const callbackUrl = `${appUrl}/api/webhook/n8n-callback`;
 
-    // Appel à l'instance dynamique de n8n
+    // Appel à l'instance dynamique de n8n avec payload enrichi
     const response = await fetch(n8nWebhookUrl, {
       method: "POST",
       headers: {
@@ -91,6 +130,11 @@ export async function runAgent({
       body: JSON.stringify({
         agencyId: organizationId,
         agentId,
+        templateId,
+        systemPrompt,
+        agentName,
+        agentRole,
+        temperature,
         inputData,
         isAutomation,
         callbackUrl,
@@ -101,7 +145,7 @@ export async function runAgent({
       throw new Error(`n8n returned status code: ${response.status}`);
     }
 
-    // Étape D : Gérer proprement la réponse JSON ou texte dynamique de n8n
+    // Étape E : Gérer proprement la réponse JSON ou texte dynamique de n8n
     const contentType = response.headers.get("content-type");
     let resultData: any = null;
 

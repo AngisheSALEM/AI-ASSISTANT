@@ -14,3 +14,7 @@ build/
 /src/generated/prisma
 playwright-report/
 test-results/
+.vercel
+.env.vercel
+.env.vercel.local
+n8n_imported_templates/

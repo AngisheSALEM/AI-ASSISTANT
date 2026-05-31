@@ -1,0 +1,209 @@
+{
+  "name": "Kin Opere — Agent IA Dynamique & Multi-Tenant",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a11b5514-8742-4f35-9c95-5cb9b51fa111",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-flash",
+        "options": {
+          "temperature": "={{ $node[\"Execute Workflow Trigger\"].json.body.temperature || 0.7 }}"
+        }
+      },
+      "id": "a22b5514-8742-4f35-9c95-5cb9b51fa222",
+      "name": "Google Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        380,
+        480
+      ],
+      "credentials": {
+        "googleGeminiApi": {
+          "id": "google-gemini-api-credential-id",
+          "name": "Google Gemini API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "={{ $node[\"Execute Workflow Trigger\"].json.body.systemPrompt }}"
+        }
+      },
+      "id": "a33b5514-8742-4f35-9c95-5cb9b51fa333",
+      "name": "Agent IA RAG Dynamique",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $node[\"Execute Workflow Trigger\"].json.body.callbackUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": {
+          "keyVal": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": {
+          "keyVal": [
+            {
+              "name": "action",
+              "value": "SAVE_MESSAGE"
+            },
+            {
+              "name": "agencyId",
+              "value": "={{ $node[\"Execute Workflow Trigger\"].json.body.agencyId }}"
+            },
+            {
+              "name": "agentId",
+              "value": "={{ $node[\"Execute Workflow Trigger\"].json.body.agentId }}"
+            },
+            {
+              "name": "data",
+              "value": "={ \"content\": \"{{ $json.output }}\", \"role\": \"assistant\", \"uiType\": \"markdown\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a44b5514-8742-4f35-9c95-5cb9b51fa444",
+      "name": "Envoi du Message à Next.js",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kin-opere-callback-secret-id",
+          "name": "KinOpereCallbackAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $node[\"Execute Workflow Trigger\"].json.body.callbackUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": {
+          "keyVal": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": {
+          "keyVal": [
+            {
+              "name": "action",
+              "value": "CREATE_DAILY_REPORT"
+            },
+            {
+              "name": "agencyId",
+              "value": "={{ $node[\"Execute Workflow Trigger\"].json.body.agencyId }}"
+            },
+            {
+              "name": "agentId",
+              "value": "={{ $node[\"Execute Workflow Trigger\"].json.body.agentId }}"
+            },
+            {
+              "name": "data",
+              "value": "={ \"summaryText\": \"L'agent {{ $node[\\\"Execute Workflow Trigger\\\"].json.body.agentName }} ({{ $node[\\\"Execute Workflow Trigger\\\"].json.body.agentRole }}) a traité l'objectif avec succès. Résumé exécutif généré dynamiquement.\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a55b5514-8742-4f35-9c95-5cb9b51fa555",
+      "name": "Générer Rapport Quotidien",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        920,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kin-opere-callback-secret-id",
+          "name": "KinOpereCallbackAuth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Agent IA RAG Dynamique",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent IA RAG Dynamique",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent IA RAG Dynamique": {
+      "main": [
+        [
+          {
+            "node": "Envoi du Message à Next.js",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envoi du Message à Next.js": {
+      "main": [
+        [
+          {
+            "node": "Générer Rapport Quotidien",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionTimeout": 300
+  }
+}

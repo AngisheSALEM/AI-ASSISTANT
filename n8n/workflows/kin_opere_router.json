@@ -49,16 +49,12 @@
     {
       "parameters": {
         "dataType": "string",
-        "value1": "={{ $json.body.agentId }}",
+        "value1": "={{ $json.body.templateId }}",
         "rules": {
           "rules": [
             {
               "value2": "pdf-generator",
               "output": 1
-            },
-            {
-              "value2": "comptable",
-              "output": 2
             }
           ]
         },
@@ -75,11 +71,11 @@
     },
     {
       "parameters": {
-        "workflowId": "comptable-subworkflow-id-or-name",
+        "workflowId": "kin_opere_dynamic_agent",
         "options": {}
       },
       "id": "11f2b055-c55c-4444-9999-cb9b51fa4444",
-      "name": "Appel Agent Comptable",
+      "name": "Appel Agent Dynamique",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
       "position": [
@@ -232,17 +228,16 @@
     },
     "Aiguillage par AgentId": {
       "main": [
-        [],
         [
           {
-            "node": "Appel Générateur PDF",
+            "node": "Appel Agent Dynamique",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Appel Agent Comptable",
+            "node": "Appel Générateur PDF",
             "type": "main",
             "index": 0
           }
