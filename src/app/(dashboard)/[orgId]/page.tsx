@@ -147,6 +147,32 @@ export default function DashboardPage({
         </div>
       </div>
 
+      {/* Capacité Inexploitée Widget (uniquement pour Standard / Free) */}
+      {organization.plan !== "PREMIUM" && (
+        <div className="glass-card p-6 border-l-4 border-cyan-500 bg-cyan-950/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-500 shrink-0">
+              <TrendingUp size={24} className="animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h4 className="text-lg font-bold text-white font-fraunces">Capacité Inexploitée Détectée</h4>
+                <Badge color="cyan">Recommandation IA</Badge>
+              </div>
+              <p className="text-sm text-zinc-300 max-w-3xl leading-relaxed">
+                Les dépôts de matériaux à Kinshasa perdent en moyenne <strong>15 heures par semaine</strong> sur la réconciliation manuelle des paiements et la facturation. Automatisez cela et économisez <strong>120 USD par mois</strong> de coûts indirects.
+              </p>
+            </div>
+          </div>
+          <Link
+            href={`/${orgId}/blueprint`}
+            className="px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-600 hover:to-blue-700 transition-all active:scale-95 whitespace-nowrap"
+          >
+            Lancer l'audit PDA
+          </Link>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
@@ -267,8 +293,69 @@ export default function DashboardPage({
 
       {/* Agents & Reports Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Agents */}
-        <GlassCard className="lg:col-span-2 p-6">
+        {/* Active Agents / Custom Enterprise Integration (Premium) */}
+        {organization.plan === "PREMIUM" ? (
+          <GlassCard className="lg:col-span-2 p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-text-primary dark:text-white font-fraunces">
+                  🛡️ Architecture d'Intégration Entreprise
+                </h3>
+                <p className="text-xs text-text-secondary dark:text-white/40">
+                  Canaux sur-mesure déployés avec monitoring et contrôle de code isolé.
+                </p>
+              </div>
+              <Badge color="emerald">SLA 99.9% Actif</Badge>
+            </div>
+
+            {/* Visual representation of the custom pipeline */}
+            <div className="p-5 rounded-2xl bg-black/40 border border-white/5 space-y-4">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                {[
+                  { name: "WhatsApp Gateway", status: "ONLINE", desc: "Instance Baileys dédiée" },
+                  { name: "PII NER Filter", status: "SECURE", desc: "Anonymisation locale" },
+                  { name: "n8n Processing", status: "ACTIVE", desc: "Workflows sur-mesure" },
+                  { name: "2FA Manager Link", status: "CONNECTED", desc: "Copilote Papa Kabeya" },
+                  { name: "M-Pesa API", status: "LIVE", desc: "Règles d'idempotence" },
+                ].map((step, idx, arr) => (
+                  <React.Fragment key={step.name}>
+                    <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white/5 border border-white/5 w-full md:w-36">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[9px] font-black tracking-widest text-emerald-400 uppercase">{step.status}</span>
+                      </div>
+                      <span className="text-xs font-bold text-white mb-0.5">{step.name}</span>
+                      <span className="text-[9px] text-zinc-400">{step.desc}</span>
+                    </div>
+                    {idx < arr.length - 1 && (
+                      <span className="text-cyan-500 text-lg hidden md:inline">➔</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {/* Enterprise stats details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Coûts API Réels</span>
+                <p className="text-lg font-bold text-white">0.32 USD</p>
+                <span className="text-[9px] text-zinc-500">Facturation mensuelle</span>
+              </div>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Latence moyenne</span>
+                <p className="text-lg font-bold text-white">1.8s</p>
+                <span className="text-[9px] text-zinc-500">Mise en cache Redis</span>
+              </div>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Support Dédié</span>
+                <p className="text-lg font-bold text-emerald-400">WhatsApp Privé</p>
+                <span className="text-[9px] text-zinc-500">Ingénieur : Winston</span>
+              </div>
+            </div>
+          </GlassCard>
+        ) : (
+          <GlassCard className="lg:col-span-2 p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-text-primary dark:text-white">
@@ -317,6 +404,7 @@ export default function DashboardPage({
             </div>
           )}
         </GlassCard>
+        )}
 
         {/* Daily Reports Widget */}
         <GlassCard className="p-6">
