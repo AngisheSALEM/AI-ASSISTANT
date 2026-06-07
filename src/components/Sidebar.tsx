@@ -88,20 +88,17 @@ export default function Sidebar({ orgId }: SidebarProps) {
     window.dispatchEvent(new Event("kin_opere_expert_mode_changed"));
   };
 
-  const allMenuItems = [
+  const menuItems = [
     { name: "Overview", href: `/${orgId}`, icon: LayoutDashboard },
     { name: "My Agents", href: `/${orgId}/agents`, icon: UserSquare2 },
     { name: "Blueprint", href: `/${orgId}/blueprint`, icon: Network },
     { name: "Automations", href: `/${orgId}/automations`, icon: Zap },
     { name: "Knowledge Base", href: `/${orgId}/knowledge`, icon: Database },
-    { name: "Thinking Studio", href: `/${orgId}/thinking`, icon: Brain, expertOnly: true },
     { name: "Insights", href: `/${orgId}/analytics`, icon: BarChart3 },
     { name: "Integrations", href: `/${orgId}/integrations`, icon: Plug },
     { name: "Billing", href: `/${orgId}/billing`, icon: CreditCard },
     { name: "Settings", href: `/${orgId}/settings`, icon: Settings },
   ];
-
-  const menuItems = allMenuItems.filter(item => !item.expertOnly || isExpertMode);
 
   return (
     <motion.aside
@@ -263,43 +260,7 @@ export default function Sidebar({ orgId }: SidebarProps) {
           )}
         </AnimatePresence>
 
-        {/* Mode Expert Toggle */}
-        <div className={cn("flex items-center justify-between", isCollapsed ? "justify-center" : "px-2 py-1")}>
-          {!isCollapsed && (
-            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-              <Sliders size={14} className={cn(isExpertMode ? "text-cyan-500 animate-pulse" : "text-muted-foreground")} />
-              Mode Expert
-            </span>
-          )}
-          <button
-            onClick={toggleExpertMode}
-            className={cn(
-              "relative transition-all duration-300",
-              isCollapsed 
-                ? cn(
-                    "p-2.5 border rounded-xl flex items-center justify-center transition-all",
-                    isExpertMode 
-                      ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-500 shadow-lg shadow-cyan-500/10" 
-                      : "bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 text-muted-foreground hover:text-foreground"
-                  )
-                : cn(
-                    "w-9 h-5 rounded-full relative",
-                    isExpertMode ? "bg-cyan-500" : "bg-black/10 dark:bg-white/10"
-                  )
-            )}
-          >
-            {isCollapsed ? (
-              <Sliders size={18} className={cn("shrink-0 transition-transform duration-300", isExpertMode && "rotate-90 text-cyan-500")} />
-            ) : (
-              <div
-                className={cn(
-                  "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all duration-300",
-                  isExpertMode ? "left-5" : "left-0.5"
-                )}
-              />
-            )}
-          </button>
-        </div>
+
 
         {/* WhatsApp CTA Button - Primary Action */}
         <Link href={`/${orgId}/integrations?setup=whatsapp`}>
