@@ -1,4 +1,5 @@
 {
+  "id": "2",
   "name": "Kin Opere — Agent IA Dynamique & Multi-Tenant",
   "nodes": [
     {
@@ -16,7 +17,7 @@
       "parameters": {
         "model": "gemini-1.5-flash",
         "options": {
-          "temperature": "={{ $node[\"Execute Workflow Trigger\"].json.body.temperature || 0.7 }}"
+          "temperature": "={{ $(\"Execute Workflow Trigger\").first().json.body.temperature || 0.7 }}"
         }
       },
       "id": "a22b5514-8742-4f35-9c95-5cb9b51fa222",
@@ -28,7 +29,7 @@
         480
       ],
       "credentials": {
-        "googleGeminiApi": {
+        "googlePalmApi": {
           "id": "google-gemini-api-credential-id",
           "name": "Google Gemini API Key"
         }
@@ -36,6 +37,8 @@
     },
     {
       "parameters": {
+        "promptType": "define",
+        "text": "={{ $node[\"Execute Workflow Trigger\"].json.body.inputData.prompt }}",
         "options": {
           "systemMessage": "={{ $node[\"Execute Workflow Trigger\"].json.body.systemPrompt }}"
         }
@@ -53,14 +56,17 @@
       "parameters": {
         "method": "POST",
         "url": "={{ $node[\"Execute Workflow Trigger\"].json.body.callbackUrl }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "specifyHeaders": {
           "keyVal": [
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "choisissez_une_cle_secrete_partagee"
             }
           ]
         },
@@ -94,26 +100,23 @@
       "position": [
         700,
         300
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "kin-opere-callback-secret-id",
-          "name": "KinOpereCallbackAuth"
-        }
-      }
+      ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "={{ $node[\"Execute Workflow Trigger\"].json.body.callbackUrl }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "specifyHeaders": {
           "keyVal": [
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "choisissez_une_cle_secrete_partagee"
             }
           ]
         },
@@ -147,13 +150,7 @@
       "position": [
         920,
         300
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "kin-opere-callback-secret-id",
-          "name": "KinOpereCallbackAuth"
-        }
-      }
+      ]
     }
   ],
   "connections": {

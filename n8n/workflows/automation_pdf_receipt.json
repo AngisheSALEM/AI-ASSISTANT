@@ -1,4 +1,5 @@
 {
+  "id": "3",
   "name": "Kin Opere — Automatisation Reçu & A2UI Table",
   "nodes": [
     {
@@ -30,14 +31,17 @@
       "parameters": {
         "method": "POST",
         "url": "={{ $json.callbackUrl }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "specifyHeaders": {
           "keyVal": [
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "choisissez_une_cle_secrete_partagee"
             }
           ]
         },
@@ -71,13 +75,7 @@
       "position": [
         660,
         300
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "kin-opere-callback-secret-id",
-          "name": "KinOpereCallbackAuth"
-        }
-      }
+      ]
     }
   ],
   "connections": {

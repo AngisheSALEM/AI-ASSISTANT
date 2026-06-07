@@ -24,6 +24,7 @@ model Organization {
   integrations          Integration[]
   skills                Skill[]
   memories              Memory[]
+  auditRequests         AuditRequest[]
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 }
@@ -221,6 +222,20 @@ model Memory {
   content        String
   embedding      Unsupported("vector(1536)")?
   metadata       Json?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+model AuditRequest {
+  id             String       @id @default(cuid())
+  nodeId         String
+  nodeName       String
+  description    String
+  status         String       @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt      DateTime     @default(now())

@@ -18,6 +18,7 @@ import {
   ChevronRight,
   MessageCircle,
   Sliders,
+  Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -90,6 +91,7 @@ export default function Sidebar({ orgId }: SidebarProps) {
   const allMenuItems = [
     { name: "Overview", href: `/${orgId}`, icon: LayoutDashboard },
     { name: "My Agents", href: `/${orgId}/agents`, icon: UserSquare2 },
+    { name: "Blueprint", href: `/${orgId}/blueprint`, icon: Network },
     { name: "Automations", href: `/${orgId}/automations`, icon: Zap },
     { name: "Knowledge Base", href: `/${orgId}/knowledge`, icon: Database },
     { name: "Thinking Studio", href: `/${orgId}/thinking`, icon: Brain, expertOnly: true },

@@ -55,25 +55,81 @@ async function main() {
     const connections = JSON.stringify(wf.connections);
     const active = 1; // Mark active!
     const settings = JSON.stringify(wf.settings || {});
-
-    // Check if exists
     const row = db.prepare("SELECT id FROM workflow_entity WHERE name = ?").get(name);
 
+    const versionId = generateUuid();
     if (row) {
-      console.log(`Workflow "${name}" exists. Updating and activating...`);
+      console.log(`Workflow "${name}" exists. Updating and activating (Version: ${versionId})...`);
+      // Step 1: Set activeVersionId to NULL to avoid constraint violation during update
       db.prepare(`
         UPDATE workflow_entity 
-        SET nodes = ?, connections = ?, active = ?, settings = ?, updatedAt = datetime('now')
+        SET nodes = ?, connections = ?, active = ?, settings = ?, versionId = ?, activeVersionId = NULL, updatedAt = datetime('now')
         WHERE id = ?
-      `).run(nodes, connections, active, settings, row.id);
-    } else {
-      console.log(`Workflow "${name}" does not exist. Creating and activating...`);
-      const id = generateId();
-      const versionId = generateUuid();
+      `).run(nodes, connections, active, settings, versionId, row.id);
+
+      // Step 2: Insert the version into workflow_history
       db.prepare(`
-        INSERT INTO workflow_entity (id, name, active, nodes, connections, settings, versionId)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO workflow_history (versionId, workflowId, authors, nodes, connections, name, autosaved, description, nodeGroups)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(versionId, row.id, '["system"]', nodes, connections, name, 0, wf.description || null, '[]');
+
+      // Step 3: Update activeVersionId
+      db.prepare(`
+        UPDATE workflow_entity 
+        SET activeVersionId = ?
+        WHERE id = ?
+      `).run(versionId, row.id);
+
+      // Step 4: Populate workflow_published_version to ensure active webhooks register correctly
+      db.prepare(`
+        INSERT OR REPLACE INTO workflow_published_version (workflowId, publishedVersionId)
+        VALUES (?, ?)
+      `).run(row.id, versionId);
+
+      // Step 5: Associate workflow with the default project in shared_workflow
+      const projectRow = db.prepare("SELECT id FROM project LIMIT 1").get();
+      if (projectRow) {
+        db.prepare(`
+          INSERT OR REPLACE INTO shared_workflow (workflowId, projectId, role)
+          VALUES (?, ?, ?)
+        `).run(row.id, projectRow.id, 'workflow:owner');
+      }
+    } else {
+      const id = generateId();
+      console.log(`Workflow "${name}" does not exist. Creating and activating (ID: ${id}, Version: ${versionId})...`);
+      // Step 1: Insert into workflow_entity with activeVersionId = NULL
+      db.prepare(`
+        INSERT INTO workflow_entity (id, name, active, nodes, connections, settings, versionId, activeVersionId)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
       `).run(id, name, active, nodes, connections, settings, versionId);
+
+      // Step 2: Insert into workflow_history
+      db.prepare(`
+        INSERT INTO workflow_history (versionId, workflowId, authors, nodes, connections, name, autosaved, description, nodeGroups)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(versionId, id, '["system"]', nodes, connections, name, 0, wf.description || null, '[]');
+
+      // Step 3: Update activeVersionId
+      db.prepare(`
+        UPDATE workflow_entity 
+        SET activeVersionId = ?
+        WHERE id = ?
+      `).run(versionId, id);
+
+      // Step 4: Populate workflow_published_version to ensure active webhooks register correctly
+      db.prepare(`
+        INSERT OR REPLACE INTO workflow_published_version (workflowId, publishedVersionId)
+        VALUES (?, ?)
+      `).run(id, versionId);
+
+      // Step 5: Associate workflow with the default project in shared_workflow
+      const projectRow = db.prepare("SELECT id FROM project LIMIT 1").get();
+      if (projectRow) {
+        db.prepare(`
+          INSERT OR REPLACE INTO shared_workflow (workflowId, projectId, role)
+          VALUES (?, ?, ?)
+        `).run(id, projectRow.id, 'workflow:owner');
+      }
     }
   }
 

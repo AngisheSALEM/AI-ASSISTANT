@@ -1,4 +1,5 @@
 {
+  "id": "1",
   "name": "Kin Opere — Routeur Principal & Auto-Remboursement",
   "nodes": [
     {
@@ -9,7 +10,7 @@
         "options": {}
       },
       "id": "180b5514-8742-4f35-9c95-5cb9b51fa18a",
-      "name": "Webhook Next.js",
+      "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [
@@ -20,27 +21,18 @@
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
+          "boolean": [
             {
-              "id": "c1f7b055-6677-4b44-9988-cb9b51fa1234",
-              "leftValue": "={{ $json.body.isAutomation }}",
-              "rightValue": true,
-              "operator": "true"
+              "value1": "={{ $json.body.isAutomation }}",
+              "value2": true
             }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
+          ]
+        }
       },
       "id": "51f2b055-9a88-4333-a111-cb9b51fa2222",
       "name": "Est une Automatisation ?",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
+      "typeVersion": 1,
       "position": [
         480,
         360
@@ -71,7 +63,7 @@
     },
     {
       "parameters": {
-        "workflowId": "kin_opere_dynamic_agent",
+        "workflowId": "2",
         "options": {}
       },
       "id": "11f2b055-c55c-4444-9999-cb9b51fa4444",
@@ -85,7 +77,7 @@
     },
     {
       "parameters": {
-        "workflowId": "pdf-generator-subworkflow-id-or-name",
+        "workflowId": "3",
         "options": {}
       },
       "id": "22f2b055-d66d-4444-8888-cb9b51fa5555",
@@ -135,15 +127,18 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $json.execution.error.node.input.body.callbackUrl }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $node[\"Webhook\"]?.json?.body?.callbackUrl }}",
+        "authentication": "none",
         "sendHeaders": true,
         "specifyHeaders": {
           "keyVal": [
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "choisissez_une_cle_secrete_partagee"
             }
           ]
         },
@@ -156,15 +151,15 @@
             },
             {
               "name": "agencyId",
-              "value": "={{ $json.execution.error.node.input.body.agencyId }}"
+              "value": "={{ $node[\"Webhook\"]?.json?.body?.agencyId }}"
             },
             {
               "name": "agentId",
-              "value": "={{ $json.execution.error.node.input.body.agentId }}"
+              "value": "={{ $node[\"Webhook\"]?.json?.body?.agentId }}"
             },
             {
               "name": "data",
-              "value": "={ \"amount\": {{ $json.execution.error.node.input.body.isAutomation ? 1 : 20 }}, \"reason\": \"Échec de l'exécution du nœud [{{ $json.execution.error.node.name }}] sur n8n: {{ $json.execution.error.message }}\" }"
+              "value": "={ \"amount\": {{ $node[\"Webhook\"]?.json?.body?.isAutomation ? 1 : 20 }}, \"reason\": \"Échec de l'exécution du nœud [{{ $json.execution.error.node.name }}] sur n8n: {{ $json.execution.error.message }}\" }"
             }
           ]
         },
@@ -177,17 +172,11 @@
       "position": [
         750,
         780
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "kin-opere-callback-secret-id",
-          "name": "KinOpereCallbackAuth"
-        }
-      }
+      ]
     }
   ],
   "connections": {
-    "Webhook Next.js": {
+    "Webhook": {
       "main": [
         [
           {
