@@ -6,11 +6,9 @@ import ReactFlow, {
   Controls,
   useNodesState,
   useEdgesState,
-  Position,
-  MarkerType,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Network, Zap, X, ShieldCheck, CheckCircle2, TrendingDown } from "lucide-react";
+import { Network, Zap, X, ShieldCheck, CheckCircle2, TrendingDown, HelpCircle, BookOpen } from "lucide-react";
 import { createPdaRequest } from "@/lib/actions/pda-request";
 import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 
@@ -22,8 +20,6 @@ const BlueprintNode = ({ data }: any) => {
         ? "border-cyan-500/30 hover:border-cyan-500/60 shadow-lg shadow-cyan-500/5" 
         : "border-white/5 hover:border-white/20 bg-zinc-950/40"
     }`}>
-      {/* Node Inputs/Outputs handles via position class names of reactflow handles */}
-      {/* Left/Right handles default placement */}
       <div className="flex items-center justify-between mb-3">
         <span className={`text-[10px] tracking-widest font-black uppercase ${data.isActive ? "text-cyan-400" : "text-zinc-500"}`}>
           {data.category}
@@ -68,6 +64,21 @@ export default function BlueprintPage({ params }: { params: { orgId: string } })
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orgPlan, setOrgPlan] = useState("STANDARD");
+  const [showGuide, setShowGuide] = useState(true);
+
+  // Charger la préférence de guide depuis le localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("kin_opere_blueprint_guide");
+    if (saved !== null) {
+      setShowGuide(saved === "true");
+    }
+  }, []);
+
+  const toggleGuide = () => {
+    const next = !showGuide;
+    setShowGuide(next);
+    localStorage.setItem("kin_opere_blueprint_guide", String(next));
+  };
 
   // Définir les types de nœuds personnalisés
   const nodeTypes = useMemo(() => ({ blueprintNode: BlueprintNode }), []);
@@ -246,6 +257,14 @@ export default function BlueprintPage({ params }: { params: { orgId: string } })
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleGuide}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
+          >
+            <HelpCircle size={14} className="text-cyan-400" />
+            {showGuide ? "Masquer le guide" : "Afficher le guide"}
+          </button>
+
           <span className="text-xs text-text-secondary dark:text-white/40">Statut Client :</span>
           <span className={`text-xs px-3 py-1 rounded-full font-black tracking-widest uppercase border ${
             orgPlan === "PREMIUM" 
@@ -256,6 +275,69 @@ export default function BlueprintPage({ params }: { params: { orgId: string } })
           </span>
         </div>
       </header>
+
+      {/* Guide Interactif Onboarding */}
+      {showGuide && (
+        <PremiumGlassCard className="relative overflow-hidden border border-cyan-500/10 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 p-6 rounded-2xl">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                <BookOpen className="h-5 w-5 text-cyan-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white font-fraunces">✨ Guide d'utilisation du Blueprint</h3>
+                <p className="text-xs text-zinc-400">Comprenez comment structurer et automatiser votre entreprise.</p>
+              </div>
+            </div>
+            <button 
+              onClick={toggleGuide}
+              className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 text-xs text-zinc-300">
+            <div className="space-y-2 p-4 rounded-xl bg-zinc-950/40 border border-white/5">
+              <div className="flex items-center gap-2 text-emerald-400 font-bold uppercase tracking-wider text-[10px]">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                1. Nœuds Actifs (Verts)
+              </div>
+              <p className="leading-relaxed text-zinc-400">
+                Ces flux représentent vos processus d'affaires qui tournent déjà de manière **100% autonome** et synchronisée (ex: WhatsApp SDR & CRM Sync orchestrés par n8n). Vous n'avez rien à faire ici.
+              </p>
+            </div>
+
+            <div className="space-y-2 p-4 rounded-xl bg-zinc-950/40 border border-white/5">
+              <div className="flex items-center gap-2 text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
+                <span className="h-2.5 w-2.5 rounded-full bg-zinc-500" />
+                2. Nœuds Inactifs (Gris)
+              </div>
+              <p className="leading-relaxed text-zinc-400">
+                Ces nœuds représentent des goulets d'étranglement ou des tâches manuelles non optimisées de votre équipe, entraînant des **pertes financières et de temps** (heures de saisie perdue).
+              </p>
+            </div>
+
+            <div className="space-y-2 p-4 rounded-xl bg-zinc-950/40 border border-cyan-500/10 bg-cyan-950/5">
+              <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase tracking-wider text-[10px]">
+                <Zap size={12} className="fill-cyan-500/10" />
+                3. Comment les automatiser ?
+              </div>
+              <p className="leading-relaxed text-zinc-400">
+                Cliquez sur le bouton <strong className="text-cyan-400">"Analyser ce nœud"</strong> pour ouvrir le panneau d'audit de flux et demander votre <strong>Plan Directeur d'Automatisation (PDA) Gratuit</strong>. Nos ingénieurs s'occupent de tout coder pour vous.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-[11px] text-zinc-500">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Automatisé</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-zinc-500" /> Manuel / Inefficace</span>
+            </div>
+            <span className="hidden sm:inline italic">💡 Vous pouvez zoomer et faire glisser le canvas ci-dessous pour explorer le flux.</span>
+          </div>
+        </PremiumGlassCard>
+      )}
 
       {/* Blueprint Board */}
       <PremiumGlassCard className="h-[600px] relative overflow-hidden p-0 border border-white/5">

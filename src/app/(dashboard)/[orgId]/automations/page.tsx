@@ -7,6 +7,114 @@ import { PremiumGlassCard } from "@/components/ui/PremiumGlassCard";
 import { Modal } from "@/components/ui/Modal";
 import { AgentRunner } from "@/components/agents/AgentRunner";
 
+// Composant d'illustration vectorielle dynamique pour chaque flux déterministe
+const AutomationIllustration = ({ id }: { id: string }) => {
+  let primaryColor = "#22D3EE"; // Cyan par défaut
+  let secondaryColor = "#0EA5E9"; // Blue
+  let graphic = null;
+
+  if (id === "pdf-generator") {
+    primaryColor = "#3B82F6"; // Blue
+    secondaryColor = "#1D4ED8";
+    graphic = (
+      <g stroke="currentColor" strokeWidth="1.5" fill="none">
+        {/* Document Sheet */}
+        <rect x="26" y="22" width="28" height="36" rx="4" className="opacity-80" />
+        {/* Lines representing content */}
+        <line x1="32" y1="30" x2="48" y2="30" strokeWidth="2" className="opacity-40" />
+        <line x1="32" y1="38" x2="48" y2="38" strokeWidth="2" className="opacity-40" />
+        <line x1="32" y1="46" x2="42" y2="46" strokeWidth="2" className="opacity-40" />
+        {/* Floating badge */}
+        <circle cx="52" cy="48" r="8" fill={primaryColor} />
+        <path d="M49,48 L51,50 L55,46" stroke="#FFFFFF" strokeWidth="1.5" />
+      </g>
+    );
+  } else if (id === "whatsapp-invoice-reminder") {
+    primaryColor = "#10B981"; // Emerald
+    secondaryColor = "#047857";
+    graphic = (
+      <g stroke="currentColor" strokeWidth="1.5" fill="none">
+        {/* Chat bubble */}
+        <path d="M25,35 C25,25 35,22 45,22 C55,22 61,28 61,35 C61,42 53,46 45,46 L38,52 V46 C30,46 25,41 25,35 Z" className="opacity-80" />
+        {/* Bell representing reminder */}
+        <path d="M41,30 C41,30 42,27 45,27 C48,27 49,30 49,30 V35 H41 Z" fill="currentColor" className="opacity-40" />
+        <rect x="39" y="36" width="12" height="2" rx="1" fill="currentColor" />
+      </g>
+    );
+  } else if (id === "sheet-inventory-sync") {
+    primaryColor = "#84CC16"; // Lime
+    secondaryColor = "#4D7C0F";
+    graphic = (
+      <g stroke="currentColor" strokeWidth="1.5" fill="none">
+        {/* Spreadsheet outline */}
+        <rect x="25" y="24" width="30" height="26" rx="3" className="opacity-50" />
+        <line x1="25" y1="34" x2="55" y2="34" className="opacity-40" />
+        <line x1="25" y1="42" x2="55" y2="42" className="opacity-40" />
+        <line x1="35" y1="24" x2="35" y2="50" className="opacity-40" />
+        <line x1="45" y1="24" x2="45" y2="50" className="opacity-40" />
+        {/* Rotating Sync arrow */}
+        <path d="M52,38 A10,10 0 1,1 50,30" strokeWidth="2" className="opacity-80" />
+        <path d="M50,26 L50,31 L45,30" strokeWidth="2" className="opacity-80" />
+      </g>
+    );
+  } else if (id === "email-support-routing") {
+    primaryColor = "#8B5CF6"; // Purple
+    secondaryColor = "#6D28D9";
+    graphic = (
+      <g stroke="currentColor" strokeWidth="1.5" fill="none">
+        {/* Envelope */}
+        <rect x="26" y="25" width="28" height="20" rx="3" className="opacity-60" />
+        <path d="M26,25 L40,35 L54,25" className="opacity-60" />
+        {/* Routing arrows */}
+        <path d="M40,45 V54 M40,54 L32,54 M40,54 L48,54" className="opacity-80" strokeDasharray="2,2" />
+        <circle cx="32" cy="54" r="3" fill={primaryColor} />
+        <circle cx="48" cy="54" r="3" fill={secondaryColor} />
+      </g>
+    );
+  } else {
+    primaryColor = "#06B6D4";
+    secondaryColor = "#0891B2";
+    graphic = (
+      <g stroke="currentColor" strokeWidth="1.5" fill="none">
+        <circle cx="40" cy="40" r="18" className="opacity-40" />
+        <path d="M30,40 L37,47 L50,33" strokeWidth="2" className="opacity-80" />
+      </g>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-28 rounded-2xl mb-6 overflow-hidden border border-white/5 flex items-center justify-center bg-zinc-950/40">
+      {/* Glow effect */}
+      <div 
+        className="absolute inset-0 opacity-20" 
+        style={{
+          background: `radial-gradient(circle at center, ${primaryColor}40 0%, ${secondaryColor}10 70%, transparent 100%)`
+        }} 
+      />
+      
+      {/* Pattern grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:6px_6px]" />
+      
+      {/* SVG Container */}
+      <svg 
+        width="80" 
+        height="80" 
+        viewBox="0 0 80 80" 
+        style={{ color: primaryColor }}
+      >
+        {graphic}
+      </svg>
+      
+      <div className="absolute top-2 left-3 text-[7px] font-black tracking-widest text-white/10 uppercase">
+        FLOW_TYPE // DETERMINISTIC
+      </div>
+      <div className="absolute bottom-2 right-3 text-[7px] font-black tracking-widest text-white/10 uppercase">
+        AUTO_ROUTINE
+      </div>
+    </div>
+  );
+};
+
 interface Automation {
   id: string;
   name: string;
@@ -118,10 +226,16 @@ export default function AutomationsPage({ params }: { params: { orgId: string } 
       <Grid numItemsMd={2} className="gap-6">
         {filteredAutomations.map((aut) => (
           <PremiumGlassCard key={aut.id} className="flex flex-col h-full p-6">
+            {/* Illustration vectorielle dédiée */}
+            <AutomationIllustration id={aut.id} />
+
             {/* Haut de la carte */}
             <Flex alignItems="start" className="mb-6">
-              <div className={`p-3 bg-black/5 dark:bg-white/10 rounded-2xl border border-black/5 dark:border-white/10 text-cyan-500`}>
-                <Zap size={22} className={aut.isActive ? "fill-cyan-500/20" : "text-gray-400"} />
+              <div className="flex items-center gap-2">
+                <Zap size={14} className={aut.isActive ? "text-cyan-400 fill-cyan-400/20" : "text-gray-400"} />
+                <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-wider">
+                  Workflow Fixe
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <Badge color={aut.isActive ? "emerald" : "gray"}>
