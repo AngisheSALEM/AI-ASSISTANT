@@ -25,6 +25,7 @@ model Organization {
   skills                Skill[]
   memories              Memory[]
   auditRequests         AuditRequest[]
+  paymentIntents        PaymentIntent[]
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 }
@@ -238,6 +239,20 @@ model AuditRequest {
   status         String       @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+model PaymentIntent {
+  id             String       @id @default(cuid())
+  idempotencyKey String       @unique
+  amount         Int
+  status         String       @default("PROCESSING") // PROCESSING, SUCCESS, FAILED
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  responseBody   Json?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
